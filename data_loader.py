@@ -1,5 +1,4 @@
 import os
-
 import numpy as np
 import io
 from skimage import io
@@ -24,13 +23,14 @@ def read_data():
             except FileNotFoundError:
                 print(key, "not found in", os.path.join(DATA_PATH, folder) + ". Will be set to None.")
                 img_dict[key] = None
+
         images.append(ImageSequences(img_dict))
 
     if len(images) > 1:
-        print("More tham one data loaded. Returning as a list of classes. \n")
+        print("More than one data loaded. Returning as a list of ImageSequences classes. \n")
         return images
     else:
-        print("Only one data loaded. Returning as a class. \n")
+        print("Only one data loaded. Returning as a ImageSequences class. \n")
         return images[0]
 
 
@@ -62,18 +62,17 @@ class ImageSequences:
         first_thresh = self.__all[seq] >= val
         sec_thresh = self.__all[seq] <= val2
         thresh = (first_thresh * sec_thresh).astype(int)
-        del (first_thresh)
-        del (sec_thresh)
+        del first_thresh
+        del sec_thresh
         copy_dict = {'T1': self.__t1, 'T2': self.__t2, seq: thresh}
         return ImageSequences(copy_dict)
 
     def mask(self, seq='T1', val=0, val2=1):
         first_thresh = self.__all[seq] >= val
         sec_thresh = self.__all[seq] <= val2
-
         thresh = (first_thresh * sec_thresh).astype(int)
         thresh = thresh * self.__all[seq]
-        del(first_thresh)
-        del(sec_thresh)
+        del first_thresh
+        del sec_thresh
         copy_dict = {'T1': self.__t1, 'T2': self.__t2, seq: thresh}
         return ImageSequences(copy_dict)
