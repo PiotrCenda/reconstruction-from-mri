@@ -1,12 +1,14 @@
 import os
 import numpy as np
-import io
 from skimage import io
 
 DATA_PATH = 'data'
 
 
 def normalize(a):
+    '''
+    Simple normalization to 0-1
+    '''
     return (a - np.min(a)) / np.ptp(a)
 
 

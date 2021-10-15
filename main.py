@@ -2,6 +2,13 @@ import matplotlib.pyplot as plt
 import os
 
 from data_loader import read_data
+from data_manipulation import gif_maker
+
+
+# TODO: series of img (jpg/png) to one .tif file func
+# TODO: plotting etc. func
+# TODO: prepare all data we have
+# TODO: make A LOT of correlation img, data, etc.
 
 
 def prepare_data():
@@ -10,7 +17,7 @@ def prepare_data():
 
 
 def create_list_of_masks(img, thresh_precision=10):
-    OUTPUT_FOLDER = 'test_masks'
+    OUTPUT_FOLDER = os.path.join("results", 'test_masks')
     new_folder = str(len(os.listdir(OUTPUT_FOLDER)))
     os.mkdir(os.path.join(OUTPUT_FOLDER, new_folder))
     thresh_list = [(1 / thresh_precision) * (i + 1) for i in range(thresh_precision)]
@@ -54,4 +61,8 @@ def create_list_of_masks(img, thresh_precision=10):
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     img = prepare_data()
-    create_list_of_masks(img, 20)
+    # create_list_of_masks(img, 20)
+
+    gif_maker(img.t1, name="T1")
+    gif_maker(img.t2, name="T2")
+
