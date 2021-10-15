@@ -11,11 +11,6 @@ from data_manipulation import gif_maker, image_folder_loader
 # TODO: make A LOT of correlation img, data, etc.
 
 
-def prepare_data():
-    images = read_data()
-    return images
-
-
 def create_list_of_masks(img, thresh_precision=10):
     OUTPUT_FOLDER = os.path.join("results", 'test_masks')
     new_folder = str(len(os.listdir(OUTPUT_FOLDER)))
@@ -59,7 +54,7 @@ def create_list_of_masks(img, thresh_precision=10):
 
 
 if __name__ == '__main__':
-    # img = prepare_data()
+    # img = read_data()
     # create_list_of_masks(img, 25)
     # gif_maker(img.t1, name="T1", time=100)
     tests = image_folder_loader(os.path.join("results", "test_masks", "2"))
