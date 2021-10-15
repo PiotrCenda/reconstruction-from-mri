@@ -1,9 +1,10 @@
 import os
 import numpy as np
 from PIL import Image
+from skimage import io
 
 
-def gif_maker(images_array, name=None):
+def gif_maker(images_array, name=None, time=100):
     '''
     Function which takes .tif array of images and saves it as .gif file under generic or given (as optional arg) name
     in results/gifs folder
@@ -23,4 +24,14 @@ def gif_maker(images_array, name=None):
 
     path = os.path.join(path, (name + ".gif"))
 
-    images[0].save(path, save_all=True, append_images=images[1:], optimize=False, duration=100, loop=0)
+    images[0].save(path, save_all=True, append_images=images[1:], optimize=False, duration=time, loop=0)
+
+
+def image_folder_loader(path):
+    '''
+    Loads all images (as gray) to numpy array from folder under given path
+    '''
+    filenames = os.listdir(path)
+    images_array = [io.imread((os.path.join(path, filename)), as_gray=True) for filename in filenames]
+    return images_array
+
