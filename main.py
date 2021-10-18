@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import os
 
 from data_loader import read_data
-from data_manipulation import gif_maker, image_folder_loader
+from data_manipulation import gif_maker, image_folder_loader, save_img_array_to_tif
 
 
 # TODO: series of img (jpg/png) to one .tif file func
@@ -57,6 +57,7 @@ if __name__ == '__main__':
     # img = read_data()
     # create_list_of_masks(img, 25)
     # gif_maker(img.t1, name="T1", time=100)
-    tests = image_folder_loader(os.path.join("results", "test_masks", "2"))
-    gif_maker(tests, name="test_masks", time=200)
-
+    # tests = image_folder_loader(os.path.join("results", "test_masks", "2"))
+    # gif_maker(tests, name="test_masks", time=200)
+    # save_img_array_to_tif(os.path.join("data", "MZD_PNG_B08_B16"))
+    save_img_array_to_tif(os.path.join("data", "WB_PNG_B08_B16"))
