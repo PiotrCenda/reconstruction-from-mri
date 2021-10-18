@@ -13,9 +13,15 @@ def normalize(a):
 
 
 def read_data():
+    '''
+    ONLY .TIF VERSION
+
+    Function walks through "data" dictionary subfolders and loads T1 and T2 images as objects of ImageSequences class.
+    Then returns list made of all these objects (if there is only one object, it returns it bare, without list).
+    '''
     images = []
+
     for folder in os.listdir(DATA_PATH):
-        #  tif only version
         img_dict = {'T1': None,
                     'T2': None}
         for key in img_dict.keys():
@@ -37,6 +43,10 @@ def read_data():
 
 
 class ImageSequences:
+    '''
+    Class where T1 and T2 sequences are stored. Additionaly there are functions which tresholds, masks and segments
+    objects on images.
+    '''
 
     def __init__(self, img_dict):
         self.__all = img_dict
