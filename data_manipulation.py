@@ -26,6 +26,7 @@ def gif_maker(images_array, name=None, duration=100):
     path = os.path.join(path, (name + ".gif"))
 
     images[0].save(path, save_all=True, append_images=images[1:], optimize=False, duration=duration, loop=0)
+    del images
 
 
 def image_folder_loader(path):

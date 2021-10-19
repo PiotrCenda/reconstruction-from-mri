@@ -5,9 +5,8 @@ from data_loader import read_data
 from data_manipulation import gif_maker, image_folder_loader, save_img_array_to_tif
 
 
-# TODO: series of img (jpg/png) to one .tif file func
 # TODO: plotting etc. func
-# TODO: prepare all data we have
+# TODO: prepare all data we have (yeee we have...)
 # TODO: make A LOT of correlation img, data, etc.
 
 
