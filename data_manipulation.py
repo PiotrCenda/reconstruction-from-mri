@@ -65,3 +65,11 @@ def save_img_array_to_tif(path):
     t1_images[0].save(os.path.join(folder_path, "t1.tif"), save_all=True, append_images=t1_images[1:])
     t2_images[0].save(os.path.join(folder_path, "t2.tif"), save_all=True, append_images=t2_images[1:])
     tirm_images[0].save(os.path.join(folder_path, "tirm.tif"), save_all=True, append_images=tirm_images[1:])
+
+    del t1_filenames
+    del t2_filenames
+    del tirm_filenames
+    del b16_files
+    del t1_images
+    del t2_images
+    del tirm_images
