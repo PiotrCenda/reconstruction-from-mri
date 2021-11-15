@@ -12,4 +12,4 @@ from data_plotting import *
 
 if __name__ == '__main__':
     img = read_data_from_folder(os.path.abspath('data/head'))
-    img.background_mask()
+    save_tif(img.t1, "tif_save_test", )

@@ -92,7 +92,7 @@ def save_tif(img, img_name, folder='test_masks'):
     if img_name is None:
         img_name = str(len(os.listdir(folder_path)))
 
-    img_name = os.path.join(img_name, ".tif")
+    img_path = os.path.join(folder_path, str(img_name + ".tif"))
 
     try:
         if not os.path.exists(folder_path):
@@ -100,4 +100,4 @@ def save_tif(img, img_name, folder='test_masks'):
     except OSError:
         print("Error: creating dir")
 
-    io.imsave(img_name, img)
+    io.imsave(img_path, img)

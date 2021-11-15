@@ -33,10 +33,10 @@ def create_list_of_masks(img, thresh_precision=10):
             ax[1][1].imshow(temp_mask_img_t2.t2[img.middle], cmap='gray')
             ax[1][1].set_title('T2 Mask')
             ax[1][1].axis('off')
-            plt.show()
-            # f.suptitle('Lower value: ' + str(round(thresh_list[i], 3)) +
-            #            ' Upper Value: ' + str(round(thresh_list[j], 3)))
-            # f.savefig(path)
+            # plt.show()
+            f.suptitle('Lower value: ' + str(round(thresh_list[i], 3)) +
+                       ' Upper Value: ' + str(round(thresh_list[j], 3)))
+            f.savefig(path)
             plt.close(f)
 
             del temp_th_img_t1
