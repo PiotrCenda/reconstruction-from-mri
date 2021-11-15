@@ -6,10 +6,10 @@ import re
 
 
 def gif_maker(images_array, name=None, duration=100):
-    '''
+    """
     Function which takes .tif array of images and saves it as .gif file under generic or given (as optional arg) name
-    in results/gifs folder
-    '''
+    in results/gifs folder.
+    """
 
     images = [Image.fromarray((image * 255).astype(np.uint8)).convert("P") for image in images_array]
     path = os.path.join("results", "gifs")
@@ -30,15 +30,19 @@ def gif_maker(images_array, name=None, duration=100):
 
 
 def image_folder_loader(path):
-    '''
-    Loads all images (as gray) to numpy array from folder under given path
-    '''
+    """
+    Loads all images (as gray) to numpy array from folder under given path.
+    """
     filenames = os.listdir(path)
     images_array = [io.imread((os.path.join(path, filename)), as_gray=True) for filename in filenames]
     return images_array
 
 
 def save_img_array_to_tif(path):
+    """
+    Loads all images (as gray) to numpy array from folder under given path and then saves all found modalities
+    as .tif files in "data" folder.
+    """
     t1_filenames = [filename for filename in os.listdir(path) if re.search(r"t1", filename, re.I)
                     and not re.search(r"tirm", filename, re.I)]
     t2_filenames = [filename for filename in os.listdir(path) if re.search(r"t2", filename, re.I)
@@ -47,9 +51,12 @@ def save_img_array_to_tif(path):
 
     b16_files = set(filename for filename in os.listdir(path) if re.search(r"b16", filename, re.I))
 
-    t1_images = [io.imread((os.path.join(path, filename)), as_gray=True) for filename in t1_filenames if filename not in b16_files]
-    t2_images = [io.imread((os.path.join(path, filename)), as_gray=True) for filename in t2_filenames if filename not in b16_files]
-    tirm_images = [io.imread((os.path.join(path, filename)), as_gray=True) for filename in tirm_filenames if filename not in b16_files]
+    t1_images = [io.imread((os.path.join(path, filename)), as_gray=True) for filename in t1_filenames
+                 if filename not in b16_files]
+    t2_images = [io.imread((os.path.join(path, filename)), as_gray=True) for filename in t2_filenames if filename
+                 not in b16_files]
+    tirm_images = [io.imread((os.path.join(path, filename)), as_gray=True) for filename in tirm_filenames if filename
+                   not in b16_files]
 
     t1_images = [Image.fromarray(image.astype(np.uint8)).convert("P") for image in t1_images]
     t2_images = [Image.fromarray(image.astype(np.uint8)).convert("P") for image in t2_images]
@@ -74,3 +81,23 @@ def save_img_array_to_tif(path):
     del t1_images
     del t2_images
     del tirm_images
+
+
+def save_tif(img, img_name, folder='test_masks'):
+    """
+    Saves .tif image as file in "results" folder.
+    """
+    folder_path = os.path.join("results", folder)
+
+    if img_name is None:
+        img_name = str(len(os.listdir(folder_path)))
+
+    img_name = os.path.join(img_name, ".tif")
+
+    try:
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+    except OSError:
+        print("Error: creating dir")
+
+    io.imsave(img_name, img)

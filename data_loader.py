@@ -2,26 +2,49 @@ import os
 import numpy as np
 from skimage import io
 
+from image import ImageSequences
+
 DATA_PATH = 'data'
 
 
 def normalize(a):
-    '''
+    """
     Simple normalization to 0-1
-    '''
+    """
     return (a - np.min(a)) / np.ptp(a)
 
 
-def read_data():
-    '''
+def read_data_from_folder(folder_path):
+    """
+    ONLY .TIF VERSION
+
+    Function loads T1 and T2 images from given folder as objects of ImageSequences class and then returns it.
+    """
+    img_dict = {'T1': None,
+                'T2': None}
+
+    for key in img_dict.keys():
+        img_path = os.path.join(folder_path, str(key + '.tif'))
+        try:
+            img_dict[key] = normalize(io.imread(img_path))
+        except FileNotFoundError:
+            print(key, "not found in", folder_path + ". Will be set to None.")
+            img_dict[key] = None
+
+    print("Data from folder loaded. Returning as a ImageSequences class. \n")
+    return ImageSequences(img_dict)
+
+
+def read_all_data(data_path=DATA_PATH):
+    """
     ONLY .TIF VERSION
 
     Function walks through "data" dictionary subfolders and loads T1 and T2 images as objects of ImageSequences class.
     Then returns list made of all these objects (if there is only one object, it returns it bare, without list).
-    '''
+    """
     images = []
 
-    for folder in os.listdir(DATA_PATH):
+    for folder in os.listdir(data_path):
         img_dict = {'T1': None,
                     'T2': None}
         for key in img_dict.keys():
@@ -40,51 +63,3 @@ def read_data():
     else:
         print("Only one data loaded. Returning as a ImageSequences class. \n")
         return images[0]
-
-
-class ImageSequences:
-    '''
-    Class where T1 and T2 sequences are stored. Additionaly there are functions which tresholds, masks and segments
-    objects on images.
-    '''
-
-    def __init__(self, img_dict):
-        self.__all = img_dict
-        self.__t1 = img_dict['T1']
-        self.__t2 = img_dict['T2']
-        self.__middle = self.t1.shape[0] // 2
-
-    def __copy__(self, data_dict=None):
-        copy = ImageSequences(self.__all)
-        return copy
-
-    @property
-    def t1(self):
-        return self.__t1
-
-    @property
-    def t2(self):
-        return self.__t2
-
-    @property
-    def middle(self):
-        return self.__middle
-
-    def thresh(self, seq='T1', val=0, val2=1):
-        first_thresh = self.__all[seq] >= val
-        sec_thresh = self.__all[seq] <= val2
-        thresh = (first_thresh * sec_thresh).astype(int)
-        del first_thresh
-        del sec_thresh
-        copy_dict = {'T1': self.__t1, 'T2': self.__t2, seq: thresh}
-        return ImageSequences(copy_dict)
-
-    def mask(self, seq='T1', val=0, val2=1):
-        first_thresh = self.__all[seq] >= val
-        sec_thresh = self.__all[seq] <= val2
-        thresh = (first_thresh * sec_thresh).astype(int)
-        thresh = thresh * self.__all[seq]
-        del first_thresh
-        del sec_thresh
-        copy_dict = {'T1': self.__t1, 'T2': self.__t2, seq: thresh}
-        return ImageSequences(copy_dict)
