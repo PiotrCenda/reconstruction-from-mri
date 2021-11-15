@@ -5,7 +5,7 @@ import scipy.ndimage as nd
 import matplotlib.pyplot as plt
 
 
-# TODO: add more masks, start to correlate them and modalities in procces of mask making
+# TODO: add more masks, start to correlate them and modalities into process of mask making
 
 
 class ImageSequences:
