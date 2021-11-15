@@ -1,5 +1,5 @@
-from skimage.segmentation import flood
-from skimage.morphology import remove_small_holes, disk
+from skimage.segmentation import flood, flood_fill
+from skimage.morphology import remove_small_holes, remove_small_objects, disk, closing
 import numpy as np
 import scipy.ndimage as nd
 import matplotlib.pyplot as plt
@@ -57,13 +57,17 @@ class ImageSequences:
         return median
 
     def background_mask(self):
+        """
+        based on t1 and t2 --> t2 gives problem with mask leaks and additionally t1 and t2 are shifted...
+        """
         median_t1 = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t1]).astype(np.float64)
         median_t2 = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t2]).astype(np.float64)
-        background_flood_t1 = np.array([flood(img, (0, 0), tolerance=0.04) for img in median_t1])
+        background_flood_t1 = np.array([flood(img, (0, 0), tolerance=0.05) for img in median_t1])
         background_flood_t2 = np.array([flood(img, (0, 0), tolerance=0.04) for img in median_t2])
-        remove_holes_t1 = np.array([remove_small_holes(img, area_threshold=200) for img in background_flood_t1])
-        remove_holes_t2 = np.array([remove_small_holes(img, area_threshold=200) for img in background_flood_t2])
-        result = np.logical_xor(remove_holes_t1, remove_holes_t2)
+        or_img = np.logical_and(background_flood_t1, background_flood_t2)
+        remove_noise = np.array([remove_small_holes(img, area_threshold=300) for img in or_img])
+        remove_noise_2 = np.array([remove_small_objects(img, min_size=300) for img in remove_noise])
+        result = np.array([closing(img, disk(5)) for img in remove_noise_2])
         return result
 
     def t2_tissues(self):
