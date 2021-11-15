@@ -1,7 +1,5 @@
-import os
-
 from data_loader import read_data_from_folder
-from data_manipulation import *
+from data_manipulation import save_tif
 from data_plotting import *
 
 
@@ -12,4 +10,4 @@ from data_plotting import *
 
 if __name__ == '__main__':
     img = read_data_from_folder(os.path.abspath('data/head'))
-    save_tif(img.t1, "tif_save_test", )
+    save_tif(img.background_mask(), img_name='backgrounds_xor')
