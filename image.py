@@ -79,6 +79,11 @@ class ImageSequences:
         result = np.array([nd.median_filter(img, footprint=disk(3)) for img in thresh]).astype(np.float64)
         return result
 
+    def flood_mask(self):
+        median = np.array([nd.median_filter(img, footprint=disk(3)) for img in self.__t2]).astype(np.float64)
+        result = flood(median, (0, 0, 0), tolerance=0.04)
+        return result
+
 
 def region_grow(vol, mask, start_point, epsilon=5, HU_mid=0, HU_range=0, fill_with=1):
     """
