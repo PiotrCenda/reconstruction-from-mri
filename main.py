@@ -2,8 +2,7 @@ from data_loader import read_data_from_folder
 from data_manipulation import save_tif
 from data_plotting import *
 
-from time import time
-
+from time import perf_counter
 
 # TODO: make masks
 # TODO: prepare all data we have (yea, we have...)
@@ -12,7 +11,7 @@ from time import time
 
 if __name__ == '__main__':
     img = read_data_from_folder(os.path.abspath('data/head'))
-    t0 = time()
+    t0 = perf_counter()
     save_tif(img.flood_mask(), img_name='flood_3d_test')
-    t1 = time()
+    t1 = perf_counter()
     print(f"flood masks take {t1-t0} s to compute")

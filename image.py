@@ -1,4 +1,4 @@
-from skimage.segmentation import flood, flood_fill
+from skimage.segmentation import flood
 from skimage.morphology import remove_small_holes, remove_small_objects, disk, closing
 import numpy as np
 import scipy.ndimage as nd
@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 
 
 # TODO: add more masks, start to correlate them and modalities into process of mask making
+"""
+try flood 3d!!! but on different branch!!!
+"""
 
 
 class ImageSequences:
