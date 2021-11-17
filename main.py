@@ -1,8 +1,8 @@
 from data_loader import read_data_from_folder
 from data_manipulation import save_tif
-from data_plotting import *
 
 from time import perf_counter
+import os
 
 # TODO: make masks
 # TODO: prepare all data we have (yea, we have...)
