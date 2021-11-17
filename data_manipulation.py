@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from PIL import Image
-from skimage import io
+from skimage import io, img_as_ubyte
 import re
 
 
@@ -83,7 +83,7 @@ def save_img_array_to_tif(path):
     del tirm_images
 
 
-def save_tif(img, img_name, folder='test_masks'):
+def save_tif(img, img_name=None, folder='test_masks'):
     """
     Saves .tif image as file in "results" folder.
     """
@@ -100,4 +100,4 @@ def save_tif(img, img_name, folder='test_masks'):
     except OSError:
         print("Error: creating dir")
 
-    io.imsave(img_path, img)
+    io.imsave(img_path, img_as_ubyte(img))
