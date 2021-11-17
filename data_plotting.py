@@ -1,5 +1,36 @@
 import os
 import matplotlib.pyplot as plt
+import numpy as np
+from mpl_toolkits.mplot3d import Axes3D
+
+
+def plot_3d(image):
+    img = np.array(np.invert(image[20:60, 100:150, 250:300])).astype(np.uint8)
+    print(img)
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    vol = np.where(img > 0)
+
+    ax.scatter(vol[0], vol[1], vol[2], marker='o')
+    plt.show()
+
+
+def plot_3d_voxel(img):
+    img = img[:10, :10, :10]
+
+    filled = np.ones(img.shape)
+    volume = np.ones(img.shape)
+    filled[np.invert(img)] = 1
+
+    # repeating values 3 times for grayscale
+    colors = np.repeat(filled[:, :, :, np.newaxis], 3, axis=3)
+
+    fig = plt.figure()
+    ax = fig.gca(projection='3d')
+
+    ax.voxels(volume, facecolors=colors, edgecolors='k')
+    plt.show()
 
 
 def create_list_of_masks(img, thresh_precision=10):
