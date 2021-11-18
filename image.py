@@ -2,6 +2,7 @@ from skimage.segmentation import flood
 from skimage.morphology import remove_small_holes, remove_small_objects, disk, closing
 import numpy as np
 import scipy.ndimage as nd
+from data_rigid_transform import rigid_transform
 
 
 # TODO: add more masks, start to correlate them and modalities into process of mask making
@@ -62,8 +63,10 @@ class ImageSequences:
         """
         based on t1 and t2 --> t2 gives problem with mask leaks and additionally t1 and t2 are shifted...
         """
+        params = np.array([0, 0, 0, 0, 0, 0, 0.95, 0.96, 1])
+        t2 = rigid_transform(self.__t2, params)
         median_t1 = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t1]).astype(np.float64)
-        median_t2 = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t2]).astype(np.float64)
+        median_t2 = np.array([nd.median_filter(img, footprint=disk(2)) for img in t2]).astype(np.float64)
         background_flood_t1 = np.array([flood(img, (0, 0), tolerance=0.05) for img in median_t1])
         background_flood_t2 = np.array([flood(img, (0, 0), tolerance=0.04) for img in median_t2])
         or_img = np.logical_and(background_flood_t1, background_flood_t2)
@@ -79,6 +82,8 @@ class ImageSequences:
         return result
 
     def flood_mask(self):
-        median = np.array([nd.median_filter(img, footprint=disk(3)) for img in self.__t2]).astype(np.float64)
+        params = np.array([0, 0, 0, 0, 0, 0, 0.95, 0.96, 1])
+        t2 = rigid_transform(self.__t2, params)
+        median = np.array([nd.median_filter(img, footprint=disk(3)) for img in t2]).astype(np.float64)
         result = flood(median, (0, 0, 0), tolerance=0.04)
         return result
