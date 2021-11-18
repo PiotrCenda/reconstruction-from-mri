@@ -6,21 +6,18 @@ from tqdm import tqdm
 
 
 def plot_3d(image):
-    xm, ym, zm = np.mgrid[0:image.shape[1], 0:image.shape[2], 0:image.shape[0]].astype(np.float32)
+    xm, ym, zm = np.mgrid[0:image.shape[0], 0:image.shape[2], 0:image.shape[1]].astype(np.float32)
 
-    print(image.shape)
-    print(xm.shape)
+    xm = xm * 4
 
     points = list()
-    image = np.rot90(image, axes=(0, 1))
-    print(image.shape)
 
-    for d, x, y, z in tqdm(zip(image[::5, ::5, :].ravel(), xm.ravel(), ym.ravel(), zm.ravel())):
+    for d, x, y, z in tqdm(zip(image.ravel(), xm.ravel(), ym.ravel(), zm.ravel())):
         if d:
             points.append(np.array([x, y, z]))
 
     mesh = pv.PolyData(points)
-    mesh.plot(point_size=2, style='points', color='red', smooth_shading=True)
+    mesh.plot(point_size=7, style='points', color='white', eye_dome_lighting=True, render_points_as_spheres=True)
 
 
 def create_list_of_masks(img, thresh_precision=10):
