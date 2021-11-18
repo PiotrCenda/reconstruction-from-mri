@@ -2,17 +2,10 @@ import matplotlib.pyplot as plt
 
 from data_loader import read_data_from_folder
 from data_manipulation import save_tif
-<<<<<<< HEAD
 from data_plotting import plot_3d
 
-from time import perf_counter
-=======
-import numpy as np
-from data_rigid_transform import rigid_transform
->>>>>>> data_rigid_trans
 import os
 import numpy as np
-from skimage.morphology import remove_small_objects
 
 
 # TODO: make masks
