@@ -1,9 +1,8 @@
 from skimage.segmentation import flood
-from skimage.morphology import remove_small_holes, remove_small_objects, disk, closing
+from skimage.morphology import remove_small_holes, remove_small_objects, disk, closing, binary_erosion
 import numpy as np
 import scipy.ndimage as nd
 from data_rigid_transform import rigid_transform
-
 
 # TODO: add more masks, start to correlate them and modalities into process of mask making
 
@@ -36,54 +35,34 @@ class ImageSequences:
     def shape(self):
         return self.__shape
 
-    def thresh(self, seq='T1', val=0, val2=1):
-        first_thresh = self.__all[seq] >= val
-        sec_thresh = self.__all[seq] <= val2
-        thresh = (first_thresh * sec_thresh).astype(int)
-        del first_thresh
-        del sec_thresh
-        copy_dict = {'T1': self.__t1, 'T2': self.__t2, seq: thresh}
-        return ImageSequences(copy_dict)
-
-    def mask(self, seq='T1', val=0, val2=1):
-        first_thresh = self.__all[seq] >= val
-        sec_thresh = self.__all[seq] <= val2
-        thresh = (first_thresh * sec_thresh).astype(int)
-        thresh = thresh * self.__all[seq]
-        del first_thresh
-        del sec_thresh
-        copy_dict = {'T1': self.__t1, 'T2': self.__t2, seq: thresh}
-        return ImageSequences(copy_dict)
+    def t2_rigid_transform(self, parameters):
+        self.__t2 = rigid_transform(self.__t2, parameters)
 
     def median(self):
-        median = np.array([nd.median_filter(img, footprint=disk(3)) for img in self.__t1]).astype(np.float64)
-        return median
+        return np.array([nd.median_filter(img, footprint=disk(3)) for img in self.__t1]).astype(np.float64)
 
     def background_mask(self):
         """
         based on t1 and t2 --> t2 gives problem with mask leaks and additionally t1 and t2 are shifted...
         """
-        params = np.array([0, 0, 0, 0, 0, 0, 0.95, 0.96, 1])
-        t2 = rigid_transform(self.__t2, params)
         median_t1 = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t1]).astype(np.float64)
-        median_t2 = np.array([nd.median_filter(img, footprint=disk(2)) for img in t2]).astype(np.float64)
+        median_t2 = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t2]).astype(np.float64)
         background_flood_t1 = np.array([flood(img, (0, 0), tolerance=0.05) for img in median_t1])
         background_flood_t2 = np.array([flood(img, (0, 0), tolerance=0.04) for img in median_t2])
         or_img = np.logical_and(background_flood_t1, background_flood_t2)
         remove_noise = np.array([remove_small_holes(img, area_threshold=300) for img in or_img])
         remove_noise_2 = np.array([remove_small_objects(img, min_size=300) for img in remove_noise])
-        result = np.array([closing(img, disk(5)) for img in remove_noise_2])
-        return result
+        return np.array([closing(img, disk(5)) for img in remove_noise_2])
 
     def t2_tissues(self):
         median = np.array([nd.median_filter(img, footprint=disk(3)) for img in self.__t2]).astype(np.float64)
         thresh = median >= 0.1
-        result = np.array([nd.median_filter(img, footprint=disk(3)) for img in thresh]).astype(np.float64)
-        return result
+        return np.array([nd.median_filter(img, footprint=disk(3)) for img in thresh]).astype(np.float64)
 
     def flood_mask(self):
-        params = np.array([0, 0, 0, 0, 0, 0, 0.95, 0.96, 1])
-        t2 = rigid_transform(self.__t2, params)
-        median = np.array([nd.median_filter(img, footprint=disk(3)) for img in t2]).astype(np.float64)
-        result = flood(median, (0, 0, 0), tolerance=0.04)
-        return result
+        median = np.array([nd.median_filter(img, footprint=disk(3)) for img in self.__t2]).astype(np.float64)
+        return flood(median, (0, 0, 0), tolerance=0.04)
+
+    def bones_with_air_mask(self):
+        return remove_small_objects(np.logical_and(binary_erosion(binary_erosion(binary_erosion(np.invert(
+            self.background_mask())))), self.flood_mask()), min_size=30)
