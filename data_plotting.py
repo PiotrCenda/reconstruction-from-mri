@@ -6,9 +6,14 @@ from tqdm import tqdm
 
 
 def plot_3d(image):
-    xm, ym, zm = np.mgrid[0:image.shape[1]:5, 0:image.shape[2]:5, 0:image.shape[0]].astype(np.float32)
+    xm, ym, zm = np.mgrid[0:image.shape[1], 0:image.shape[2], 0:image.shape[0]].astype(np.float32)
+
+    print(image.shape)
+    print(xm.shape)
 
     points = list()
+    image = np.rot90(image, axes=(0, 1))
+    print(image.shape)
 
     for d, x, y, z in tqdm(zip(image[::5, ::5, :].ravel(), xm.ravel(), ym.ravel(), zm.ravel())):
         if d:
