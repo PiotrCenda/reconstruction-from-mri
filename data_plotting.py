@@ -1,36 +1,21 @@
 import os
 import matplotlib.pyplot as plt
 import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
+import pyvista as pv
+from tqdm import tqdm
 
 
 def plot_3d(image):
-    img = np.array(np.invert(image[20:60, 100:150, 250:300])).astype(np.uint8)
-    print(img)
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
+    xm, ym, zm = np.mgrid[0:image.shape[1]:5, 0:image.shape[2]:5, 0:image.shape[0]].astype(np.float32)
 
-    vol = np.where(img > 0)
+    points = list()
 
-    ax.scatter(vol[0], vol[1], vol[2], marker='o')
-    plt.show()
+    for d, x, y, z in tqdm(zip(image[::5, ::5, :].ravel(), xm.ravel(), ym.ravel(), zm.ravel())):
+        if d:
+            points.append(np.array([x, y, z]))
 
-
-def plot_3d_voxel(img):
-    img = img[:10, :10, :10]
-
-    filled = np.ones(img.shape)
-    volume = np.ones(img.shape)
-    filled[np.invert(img)] = 1
-
-    # repeating values 3 times for grayscale
-    colors = np.repeat(filled[:, :, :, np.newaxis], 3, axis=3)
-
-    fig = plt.figure()
-    ax = fig.gca(projection='3d')
-
-    ax.voxels(volume, facecolors=colors, edgecolors='k')
-    plt.show()
+    mesh = pv.PolyData(points)
+    mesh.plot(point_size=2, style='points', color='red', smooth_shading=True)
 
 
 def create_list_of_masks(img, thresh_precision=10):

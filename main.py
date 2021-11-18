@@ -4,6 +4,7 @@ from data_plotting import plot_3d
 
 from time import perf_counter
 import os
+import numpy as np
 
 # TODO: make masks
 # TODO: prepare all data we have (yea, we have...)
@@ -12,13 +13,9 @@ import os
 
 if __name__ == '__main__':
     img = read_data_from_folder(os.path.abspath('data/head'))
-    # t0 = perf_counter()
-    # save_tif(img.flood_mask(), img_name='flood_3d_test')
-    # t1 = perf_counter()
-    # print(f"flood masks take {t1-t0} s to compute")
+    # save_tif(np.logical_xor(img.flood_mask(), img.background_mask()), img_name='internal')
 
     t0 = perf_counter()
-    plot_3d(img.flood_mask())
+    plot_3d(np.logical_xor(img.flood_mask(), img.background_mask()))
     t1 = perf_counter()
-    print(f"plotting flood masks takes {t1-t0} s to compute")
-
+    print(f"plotting takes {t1-t0} s to compute")
