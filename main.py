@@ -1,11 +1,19 @@
+import matplotlib.pyplot as plt
+
 from data_loader import read_data_from_folder
 from data_manipulation import save_tif
+<<<<<<< HEAD
 from data_plotting import plot_3d
 
 from time import perf_counter
+=======
+import numpy as np
+from data_rigid_transform import rigid_transform
+>>>>>>> data_rigid_trans
 import os
 import numpy as np
 from skimage.morphology import remove_small_objects
+
 
 # TODO: make masks
 # TODO: prepare all data we have (yea, we have...)
@@ -14,10 +22,23 @@ from skimage.morphology import remove_small_objects
 
 if __name__ == '__main__':
     img = read_data_from_folder(os.path.abspath('data/head'))
-    data = remove_small_objects(np.logical_xor(img.flood_mask(), img.background_mask()), min_size=30)
-    # save_tif(data, img_name='internal')
 
-    t0 = perf_counter()
+    # params = np.array([0, 0, 0, 0, 0, 0, 0.95, 0.96, 1])
+    # trans_t2 = rigid_transform(img.t2>0.05, params)
+    # slice = 87
+    # f, ax = plt.subplots(2, 2)
+    # plt.set_cmap('gray')
+    # ax[0][0].imshow(np.invert(img.t1[slice]>0.05))
+    # ax[0][0].set_title('t1')
+    # ax[0][1].imshow(img.t2[slice]>0.05)
+    # ax[0][1].set_title('t2')
+    # ax[1][0].imshow(trans_t2[slice])
+    # ax[1][0].set_title('t2 transformed')
+    # ax[1][1].imshow(np.logical_xor(trans_t2>0.05,np.invert(img.t1[slice]>0.05))[slice])
+    # ax[1][1].set_title('trans t2-t1')
+    # plt.show()
+    data = np.logical_xor(img.background_mask(), img.flood_mask())
+    save_tif(data, img_name='scaling_xor_test')
     plot_3d(data)
-    t1 = perf_counter()
-    print(f"plotting takes {t1-t0} s to compute")
+
+
