@@ -2,9 +2,9 @@ from skimage.segmentation import flood
 from skimage.morphology import remove_small_holes, remove_small_objects, disk, closing, binary_erosion
 import numpy as np
 import scipy.ndimage as nd
-from data_rigid_transform import rigid_transform
 
-# TODO: add more masks, start to correlate them and modalities into process of mask making
+from data_rigid_transform import rigid_transform
+from data_manipulation import func_timer
 
 
 class ImageSequences:
@@ -31,7 +31,6 @@ class ImageSequences:
     def t2(self):
         return self.__t2
 
-    @property
     def shape(self):
         return self.__shape
 
@@ -41,6 +40,7 @@ class ImageSequences:
     def median(self):
         return np.array([nd.median_filter(img, footprint=disk(3)) for img in self.__t1]).astype(np.float64)
 
+    @func_timer
     def background_mask(self):
         """
         based on t1 and t2 --> t2 gives problem with mask leaks and additionally t1 and t2 are shifted...
@@ -54,15 +54,18 @@ class ImageSequences:
         remove_noise_2 = np.array([remove_small_objects(img, min_size=300) for img in remove_noise])
         return np.array([closing(img, disk(5)) for img in remove_noise_2])
 
+    @func_timer
     def t2_tissues(self):
         median = np.array([nd.median_filter(img, footprint=disk(3)) for img in self.__t2]).astype(np.float64)
         thresh = median >= 0.1
         return np.array([nd.median_filter(img, footprint=disk(3)) for img in thresh]).astype(np.float64)
 
+    @func_timer
     def flood_mask(self):
         median = np.array([nd.median_filter(img, footprint=disk(3)) for img in self.__t2]).astype(np.float64)
         return flood(median, (0, 0, 0), tolerance=0.04)
 
-    def bones_with_air_mask(self):
+    @func_timer
+    def bones_mask(self):
         return remove_small_objects(np.logical_and(binary_erosion(binary_erosion(binary_erosion(np.invert(
             self.background_mask())))), self.flood_mask()), min_size=30)

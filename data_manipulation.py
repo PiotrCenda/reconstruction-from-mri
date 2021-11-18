@@ -1,8 +1,35 @@
 import os
+import re
 import numpy as np
 from PIL import Image
 from skimage import io, img_as_ubyte
-import re
+from time import perf_counter
+from datetime import timedelta
+from contextlib import contextmanager
+
+mkdir_error_message = "Error: creating dir"
+
+
+def func_timer(function):
+    """
+    decorator for function execution time measuring
+    """
+    def wrapper(*args, **kwargs):
+        start_time = perf_counter()
+        func_return = function(*args, *kwargs)
+        time_passed = timedelta(seconds=perf_counter() - start_time)
+        func_name = function.__name__
+        print(f"Function {func_name} took {time_passed} to complete.")
+        return func_return
+    return wrapper
+
+
+@contextmanager
+def timer_block(name):
+    start_time = perf_counter()
+    yield
+    time_passed = timedelta(seconds=perf_counter() - start_time)
+    print(f"\nBlock named: \"{name}\" took {time_passed} to complete.\n")
 
 
 def gif_maker(images_array, name=None, duration=100):
@@ -18,7 +45,7 @@ def gif_maker(images_array, name=None, duration=100):
         if not os.path.exists(path):
             os.makedirs(path)
     except OSError:
-        print("Error: creating dir")
+        print(mkdir_error_message)
 
     if name is None:
         name = str(len(os.listdir(path)))
@@ -68,7 +95,7 @@ def save_img_array_to_tif(path):
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
     except OSError:
-        print("Error: creating dir")
+        print(mkdir_error_message)
 
     t1_images[0].save(os.path.join(folder_path, "t1.tif"), save_all=True, append_images=t1_images[1:])
     t2_images[0].save(os.path.join(folder_path, "t2.tif"), save_all=True, append_images=t2_images[1:])
@@ -98,6 +125,6 @@ def save_tif(img, img_name=None, folder='test_masks'):
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
     except OSError:
-        print("Error: creating dir")
+        print(mkdir_error_message)
 
     io.imsave(img_path, img_as_ubyte(img))

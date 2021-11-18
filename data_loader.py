@@ -31,7 +31,7 @@ def read_data_from_folder(folder_path):
             print(key, "not found in", folder_path + ". Will be set to None.")
             img_dict[key] = None
 
-    print("Data from folder loaded. Returning as a ImageSequences class. \n")
+    print("Data from folder loaded. Returning as a ImageSequences class.\n")
     return ImageSequences(img_dict)
 
 
