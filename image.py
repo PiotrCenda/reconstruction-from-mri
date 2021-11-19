@@ -1,10 +1,11 @@
 from skimage.segmentation import flood
-from skimage.morphology import remove_small_holes, remove_small_objects, disk, closing, binary_erosion
+from skimage.morphology import remove_small_holes, remove_small_objects, disk, closing, binary_erosion, erosion
 import numpy as np
 import scipy.ndimage as nd
 
 from data_rigid_transform import rigid_transform
 from data_manipulation import func_timer
+from data_manipulation import save_tif
 
 
 class ImageSequences:
@@ -55,10 +56,29 @@ class ImageSequences:
         return np.array([closing(img, disk(5)) for img in remove_noise_2])
 
     @func_timer
-    def t2_tissues(self):
-        median = np.array([nd.median_filter(img, footprint=disk(3)) for img in self.__t2]).astype(np.float64)
-        thresh = median >= 0.1
-        return np.array([nd.median_filter(img, footprint=disk(3)) for img in thresh]).astype(np.float64)
+    def soft_tissues(self):
+        """
+        ! experiment dark/light soft tissues
+        """
+        thresh_t1_dark = np.logical_and(self.__t1 <= 0.4, self.__t1 >= 0.12)
+        thresh_t1_light = self.__t1 >= 0.4
+        thresh_t2 = self.__t2 >= 0.3
+
+        thresh_t1 = np.logical_or(thresh_t1_light, thresh_t1_dark)
+
+        remove_noise_t1 = np.array([remove_small_holes(img, area_threshold=15) for img in thresh_t1])
+        remove_noise_t2 = np.array([remove_small_holes(img, area_threshold=15) for img in thresh_t2])
+        remove_noise2_t1 = np.array([remove_small_objects(img, min_size=5) for img in remove_noise_t1])
+        remove_noise2_t2 = np.array([remove_small_objects(img, min_size=5) for img in remove_noise_t2])
+
+        closing_t1 = np.array([erosion(img, disk(3)) for img in remove_noise2_t1])
+
+        save_tif(closing_t1, img_name="closing_t1")
+        save_tif(remove_noise2_t2, img_name="remove_noise2_t2")
+
+        sum_t1_t2 = np.logical_or(remove_noise2_t1, remove_noise2_t2)
+
+        return sum_t1_t2
 
     @func_timer
     def flood_mask(self):
@@ -68,4 +88,4 @@ class ImageSequences:
     @func_timer
     def bones_mask(self):
         return remove_small_objects(np.logical_and(binary_erosion(binary_erosion(binary_erosion(np.invert(
-            self.background_mask())))), self.flood_mask()), min_size=30)
+            self.background_mask())))), self.flood_mask()), min_size=40)

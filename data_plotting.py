@@ -11,7 +11,7 @@ from data_manipulation import func_timer
 def plot_3d(image):
     image = image[1:-1, 1:-1, 1:-1]
     xm, ym, zm = np.mgrid[0:image.shape[0], 0:image.shape[2], 0:image.shape[1]].astype(np.float32)
-    xm = xm * 4
+    xm = xm * 5
 
     points = list()
 
