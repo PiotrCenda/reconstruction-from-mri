@@ -16,7 +16,7 @@ if __name__ == '__main__':
     with timer_block("soft tissues mask"):
         soft_tissues_data = img.soft_tissues()
         save_tif(soft_tissues_data, img_name="soft_tissues_data")
-        plot_3d(soft_tissues_data)
 
-    # with timer_block('bones mask making'):
-    #     bones = img.bones_mask()
+    with timer_block('bones mask making'):
+        bones = img.bones_mask()
+        plot_3d(bones)
