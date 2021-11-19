@@ -77,10 +77,10 @@ class ImageSequences:
 
     @func_timer
     def flood_mask(self):
-        median = np.array([nd.median_filter(img, footprint=disk(3)) for img in self.__t2]).astype(np.float64)
-        return flood(median, (0, 0, 0), tolerance=0.04)
+        median = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t2]).astype(np.float64)
+        return flood(median, (0, 0, 0), tolerance=0.06)
 
     @func_timer
     def bones_mask(self):
-        return remove_small_objects(np.logical_and(binary_erosion(binary_erosion(np.invert(
-            self.background_mask()))), self.flood_mask()), min_size=40)
+        return remove_small_objects(np.logical_or(np.logical_and(binary_erosion(binary_erosion(np.invert(
+            self.background_mask()))), self.flood_mask()), self.soft_tissues()), min_size=40)
