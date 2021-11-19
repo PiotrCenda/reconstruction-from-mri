@@ -47,11 +47,14 @@ class ImageSequences:
         """
         median_t1 = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t1]).astype(np.float64)
         median_t2 = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t2]).astype(np.float64)
-        background_flood_t1 = np.array([flood(img, (0, 0), tolerance=0.05) for img in median_t1])
-        background_flood_t2 = np.array([flood(img, (0, 0), tolerance=0.04) for img in median_t2])
+
+        background_flood_t1 = np.array([flood(img, (0, 0), tolerance=0.04) for img in median_t1])
+        background_flood_t2 = np.array([flood(img, (0, 0), tolerance=0.03) for img in median_t2])
         or_img = np.logical_and(background_flood_t1, background_flood_t2)
+
         remove_noise = np.array([remove_small_holes(img, area_threshold=300) for img in or_img])
         remove_noise_2 = np.array([remove_small_objects(img, min_size=300) for img in remove_noise])
+
         return np.array([closing(img, disk(5)) for img in remove_noise_2])
 
     @func_timer
@@ -65,7 +68,7 @@ class ImageSequences:
         thresh_t1_dark = np.logical_and(median_t1 <= 0.4, median_t1 >= 0.14)
         thresh_t1_light = median_t1 >= 0.4
         thresh_t1 = np.logical_or(thresh_t1_light, thresh_t1_dark)
-        thresh_t2 = median_t2 >= 0.27
+        thresh_t2 = median_t2 >= 0.25
 
         remove_noise_t1 = np.array([remove_small_holes(img, area_threshold=20) for img in thresh_t1])
         remove_noise_t2 = np.array([remove_small_holes(img, area_threshold=20) for img in thresh_t2])
@@ -77,10 +80,22 @@ class ImageSequences:
 
     @func_timer
     def flood_mask(self):
-        median = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t2]).astype(np.float64)
-        return flood(median, (0, 0, 0), tolerance=0.06)
+        median_t1 = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t1]).astype(np.float64)
+        median_t2 = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t2]).astype(np.float64)
+
+        flood_mask_t1 = flood(median_t1, (0, 0, 0), tolerance=0.3)
+        flood_mask_t2 = flood(median_t2, (0, 0, 0), tolerance=0.6)
+
+        remove_noise_t1 = np.array([remove_small_holes(img, area_threshold=15) for img in flood_mask_t1])
+        remove_noise_t2 = np.array([remove_small_holes(img, area_threshold=15) for img in flood_mask_t2])
+        remove_noise2_t1 = np.array([remove_small_objects(img, min_size=100) for img in remove_noise_t1])
+        remove_noise2_t2 = np.array([remove_small_objects(img, min_size=100) for img in remove_noise_t2])
+        result = np.logical_or(remove_noise2_t1, remove_noise2_t2)
+
+        return result
 
     @func_timer
     def bones_mask(self):
-        return remove_small_objects(np.logical_or(np.logical_and(binary_erosion(binary_erosion(np.invert(
-            self.background_mask()))), self.flood_mask()), self.soft_tissues()), min_size=40)
+        return remove_small_objects(np.logical_and(np.logical_and(binary_erosion(binary_erosion(binary_erosion(
+            (np.invert(self.background_mask()))))), self.flood_mask()), np.logical_not(
+            self.soft_tissues())), min_size=30)

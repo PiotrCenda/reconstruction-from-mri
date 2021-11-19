@@ -13,10 +13,10 @@ if __name__ == '__main__':
     img = read_data_from_folder(os.path.abspath('data/head'))
     img.t2_rigid_transform(parameters=np.array([0, 0, 0, 0, 0, 0, 0.95, 0.96, 1]))
 
-    with timer_block("soft tissues mask"):
-        soft_tissue = img.soft_tissues()
-        save_tif(soft_tissue, img_name="soft_tissue_mask")
-        plot_3d(soft_tissue)
+    # with timer_block("soft tissues mask"):
+    #     soft_tissue = img.soft_tissues()
+    #     save_tif(soft_tissue, img_name="soft_tissue_mask")
+    #     plot_3d(soft_tissue)
 
     with timer_block('bones mask making'):
         bones = img.bones_mask()
