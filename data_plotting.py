@@ -10,12 +10,12 @@ from data_manipulation import func_timer
 @func_timer
 def plot_3d(image):
     image = image[1:-1, 1:-1, 1:-1]
-    xm, ym, zm = np.mgrid[0:image.shape[0], 0:image.shape[2], 0:image.shape[1]].astype(np.float32)
+    xm, ym, zm = np.mgrid[0:image.shape[0], 0:image.shape[2], 0:image.shape[1]].astype(np.float64)
     xm = xm * 5
 
     points = list()
 
-    print(f"Creating points of 3d {image.__name__}: ")
+    print(f"\nCreating points of 3d image: ")
 
     for d, x, y, z in tqdm(zip(image.ravel(), xm.ravel(), ym.ravel(), zm.ravel())):
         if d:
