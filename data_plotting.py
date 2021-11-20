@@ -15,7 +15,7 @@ def plot_3d(image):
 
     points = list()
 
-    print("Creating points of 3d img: ")
+    print(f"Creating points of 3d {image.__name__}: ")
 
     for d, x, y, z in tqdm(zip(image.ravel(), xm.ravel(), ym.ravel(), zm.ravel())):
         if d:

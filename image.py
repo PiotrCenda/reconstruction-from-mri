@@ -5,6 +5,7 @@ import numpy as np
 
 from data_rigid_transform import rigid_transform
 from data_manipulation import func_timer, doce
+from data_plotting import plot_3d
 
 
 class ImageSequences:
@@ -84,14 +85,14 @@ class ImageSequences:
         median_t1 = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t1]).astype(np.float64)
         median_t2 = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t2]).astype(np.float64)
 
-        flood_mask_t1 = flood(median_t1, (0, 0, 0), tolerance=0.3)
-        flood_mask_t2 = flood(median_t2, (0, 0, 0), tolerance=0.6)
+        flood_mask_t1 = flood(median_t1, (0, 0, 0), tolerance=0.4)
+        flood_mask_t2 = flood(median_t2, (0, 0, 0), tolerance=0.5)
 
-        remove_noise_t1 = np.array([remove_small_holes(img, area_threshold=15) for img in flood_mask_t1])
-        remove_noise_t2 = np.array([remove_small_holes(img, area_threshold=15) for img in flood_mask_t2])
-        remove_noise2_t1 = np.array([remove_small_objects(img, min_size=100) for img in remove_noise_t1])
-        remove_noise2_t2 = np.array([remove_small_objects(img, min_size=100) for img in remove_noise_t2])
-        result = np.logical_or(remove_noise2_t1, remove_noise2_t2)
+        # remove_noise_t1 = np.array([remove_small_holes(img, area_threshold=15) for img in flood_mask_t1])
+        # remove_noise_t2 = np.array([remove_small_holes(img, area_threshold=15) for img in flood_mask_t2])
+        # remove_noise2_t1 = np.array([remove_small_objects(img, min_size=100) for img in remove_noise_t1])
+        # remove_noise2_t2 = np.array([remove_small_objects(img, min_size=100) for img in remove_noise_t2])
+        result = np.logical_or(flood_mask_t1, flood_mask_t2)
 
         return result
 
@@ -100,6 +101,10 @@ class ImageSequences:
         no_background = doce(np.logical_not(self.background_mask()), "5e")
         internal_flood = np.logical_and(no_background, self.flood_mask())
         no_soft_tissues = np.logical_not(self.soft_tissues())
+
+        plot_3d(no_background)
+        plot_3d(internal_flood)
+        plot_3d(no_soft_tissues)
 
         return remove_small_objects(np.logical_and(internal_flood, no_soft_tissues), min_size=30)
 
