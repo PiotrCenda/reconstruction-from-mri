@@ -1,3 +1,4 @@
+import functools
 import os
 import re
 import numpy as np
@@ -6,8 +7,44 @@ from skimage import io, img_as_ubyte
 from time import perf_counter
 from datetime import timedelta
 from contextlib import contextmanager
+import re
+from skimage.morphology  import binary_erosion, binary_closing,\
+                            binary_opening, binary_dilation
 
 mkdir_error_message = "Error: creating dir"
+
+
+def doce(img, command: str):
+    """
+    :param img: image to make operation on
+    :param command: example "e5c3o1d" - 1 erosion 5 closing 3 openings 1 dilatation
+    :return: transfomred image
+    """
+    command_dict = {'d': binary_dilation,
+                    'o': binary_opening,
+                    'c': binary_closing,
+                    'e': binary_erosion}
+    command = command.lower()
+    command_len = len(command)
+    current_element = 0
+    img = img.astype(int)
+
+    while current_element < command_len:
+        if command[current_element].isnumeric():
+            number_iterator = 0
+            while command[current_element+number_iterator].isnumeric():
+                number_iterator += 1
+            print(command[current_element: current_element + number_iterator],
+                  command_dict[command[current_element + number_iterator]].__name__)
+            for _ in range(int(command[current_element: current_element + number_iterator])):
+                img = command_dict[command[current_element + number_iterator]](img)
+            current_element += (number_iterator)
+        else:
+            print(command_dict[command[current_element]].__name__)
+            img = command_dict[command[current_element]](img)
+        current_element += 1
+
+    return img.astype(int)
 
 
 def func_timer(function):

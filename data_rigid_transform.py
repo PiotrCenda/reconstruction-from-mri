@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.ndimage as nd
+from scipy import optimize
 
 
 # Modeling images
@@ -42,15 +43,15 @@ def rotation_matrix_z(theta):
     return rot_mat
 
 
-def translate_matrix(x, y, z, sx, sy, sz):
+def translate_matrix(x, y, z):
     """
     returns rotation matrix for axis
     theta should be in radians
     """
-    trans_mat = np.array([[sx, 0, 0, x],
-                        [0, sy, 0, y],
-                        [0, 0, sz, z],
-                        [0, 0, 0, 1]])
+    trans_mat = np.array([[1, 0, 0, x],
+                          [0, 1, 0, y],
+                          [0, 0, 1, z],
+                          [0, 0, 0, 1]])
 
     return trans_mat
 
@@ -86,8 +87,7 @@ def axises_rotations_matrix(theta1, theta2, theta3):
 
 
 def rigid_transform(img, args):
-    alpha, beta, gamma, x, y, z, sx, sy, sz = args[0], args[1], args[2], args[3], args[4], \
-                                              args[5], args[6], args[8], args[7]
+    alpha, beta, gamma, x, y, z, = args[0], args[1], args[2], args[3], args[4], args[5]
 
     # coordinates for 3d image
     grid_x, grid_y, grid_z = np.meshgrid(np.arange(img.shape[1]),
@@ -102,13 +102,11 @@ def rigid_transform(img, args):
                     new_grid_z, np.ones(new_grid_x.shape)])
 
     # rotate matrix
-    transform_rotation_matrix = axises_rotations_matrix(alpha, beta, gamma) \
-                                @ translate_matrix(x, y, z, sx, sy, sz)
-    # transform_rotation_matrix = transform_rotation_matrix
+    transform_rotation_matrix = axises_rotations_matrix(alpha, beta, gamma) @ translate_matrix(x, y, z)
     centered_transform_rotation_matrix = center_matrix(transform_rotation_matrix, img.shape)
 
     # calculate new coordinates
-    m_x_transformed = np.linalg.inv(centered_transform_rotation_matrix) @ m_x
+    m_x_transformed = np.linalg.pinv(centered_transform_rotation_matrix) @ m_x
 
     trans_grid_x = m_x_transformed[1].reshape(grid_x.shape)
     trans_grid_y = m_x_transformed[0].reshape(grid_y.shape)
@@ -120,3 +118,20 @@ def rigid_transform(img, args):
     transformed_image = nd.map_coordinates(img, grid, order=0)
 
     return transformed_image
+
+
+def ssd(a, b):
+    dif = a.ravel() - b.ravel()
+    return np.dot(dif, dif)
+
+
+def register_image(image_model, image_to_change):
+    start_params = np.array([0, 0, 0, 0, 0, 0])
+
+    def cost_function(params):
+        image_changed = rigid_transform(image_to_change, params)
+        print(params)
+        return ssd(image_changed, image_model)
+
+    best_parameters = optimize.fmin(func=cost_function, x0=start_params)
+    return best_parameters

@@ -1,6 +1,5 @@
 from skimage.segmentation import flood
 from skimage.morphology import remove_small_holes, remove_small_objects, disk, closing, binary_erosion
-import numpy as np
 import scipy.ndimage as nd
 
 from data_rigid_transform import rigid_transform
@@ -69,3 +68,4 @@ class ImageSequences:
     def bones_mask(self):
         return remove_small_objects(np.logical_and(binary_erosion(binary_erosion(binary_erosion(np.invert(
             self.background_mask())))), self.flood_mask()), min_size=30)
+
