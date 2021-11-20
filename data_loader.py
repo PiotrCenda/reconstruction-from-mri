@@ -14,7 +14,7 @@ def normalize(a):
     return (a - np.min(a)) / np.ptp(a)
 
 
-def read_data_from_folder(folder_path):
+def read_data_from_folder(folder_path: str):
     """
     ONLY .TIF VERSION
 

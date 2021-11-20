@@ -3,7 +3,6 @@ import scipy.ndimage as nd
 from scipy import optimize
 
 
-# Modeling images
 def rotation_matrix_x(theta):
     """
     returns rotation matrix for axis,
@@ -121,7 +120,7 @@ def rigid_transform(img, args):
 
 
 def ssd(a, b):
-    dif = a.ravel() - b.ravel()
+    dif = np.logical_xor(a.ravel(), b.ravel())
     return np.dot(dif, dif)
 
 
@@ -134,4 +133,5 @@ def register_image(image_model, image_to_change):
         return ssd(image_changed, image_model)
 
     best_parameters = optimize.fmin(func=cost_function, x0=start_params)
+
     return best_parameters

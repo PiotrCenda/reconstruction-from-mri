@@ -1,15 +1,12 @@
-import functools
 import os
 import re
 import numpy as np
 from PIL import Image
-from skimage import io, img_as_ubyte
 from time import perf_counter
 from datetime import timedelta
+from skimage import io, img_as_ubyte
 from contextlib import contextmanager
-import re
-from skimage.morphology  import binary_erosion, binary_closing,\
-                            binary_opening, binary_dilation
+from skimage.morphology import binary_erosion, binary_closing, binary_opening, binary_dilation
 
 mkdir_error_message = "Error: creating dir"
 
@@ -38,13 +35,13 @@ def doce(img, command: str):
                   command_dict[command[current_element + number_iterator]].__name__)
             for _ in range(int(command[current_element: current_element + number_iterator])):
                 img = command_dict[command[current_element + number_iterator]](img)
-            current_element += (number_iterator)
+            current_element += number_iterator
         else:
             print(command_dict[command[current_element]].__name__)
             img = command_dict[command[current_element]](img)
         current_element += 1
 
-    return img.astype(int)
+    return img.astype(np.uint8)
 
 
 def func_timer(function):
@@ -62,7 +59,10 @@ def func_timer(function):
 
 
 @contextmanager
-def timer_block(name):
+def timer_block(name: str):
+    """
+    context manager for block of code execution time measuring
+    """
     start_time = perf_counter()
     yield
     time_passed = timedelta(seconds=perf_counter() - start_time)
@@ -93,7 +93,7 @@ def gif_maker(images_array, name=None, duration=100):
     del images
 
 
-def image_folder_loader(path):
+def image_folder_loader(path: str):
     """
     Loads all images (as gray) to numpy array from folder under given path.
     """
@@ -102,7 +102,7 @@ def image_folder_loader(path):
     return images_array
 
 
-def save_img_array_to_tif(path):
+def save_img_array_to_tif(path: str):
     """
     Loads all images (as gray) to numpy array from folder under given path and then saves all found modalities
     as .tif files in "data" folder.
