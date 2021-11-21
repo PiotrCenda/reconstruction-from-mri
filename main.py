@@ -9,8 +9,9 @@ from data_plotting import plot_3d
 params_auto = np.array([2.01109052e-04, 1.57808256e-06, 3.65095064e-05, 3.50697591e-04, 2.56535195e-04, -2.36831914e-04,
                         9.40511337e-01, 9.38207923e-01, 1.00130253e+00])
 
-# TODO: make masks
-# TODO: make automatic rigid transform (?)
+# TODO: update soft tissues and bone masks
+# TODO: update automatic rigid transform
+# TODO: add plots from marching_cubes function
 
 
 if __name__ == '__main__':
@@ -18,7 +19,8 @@ if __name__ == '__main__':
     img.t2_rigid_transform(parameters=params_auto)
 
     with timer_block("bones mask making"):
+        soft = img.soft_tissues()
+        save_tif(soft, img_name="soft_mask")
         bones = img.bones_mask()
-        save_tif(bones, img_name="bones_mask")
+        save_tif(bones, img_name="bones_test")
         plot_3d(bones)
-
