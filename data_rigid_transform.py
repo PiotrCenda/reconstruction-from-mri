@@ -129,7 +129,7 @@ def register_image(image_model, image_to_change):
 
     def cost_function(params):
         image_changed = rigid_transform(image_to_change, params)
-        print(params)
+        print(f"Checking parameters: {params}")
         return ssd(image_changed, image_model)
 
     best_parameters = optimize.fmin(func=cost_function, x0=start_params)
