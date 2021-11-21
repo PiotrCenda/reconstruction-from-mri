@@ -1,5 +1,5 @@
 from skimage.segmentation import flood
-from skimage.morphology import remove_small_holes, remove_small_objects, disk, closing
+from skimage.morphology import remove_small_holes, remove_small_objects, disk, closing, dilation
 from skimage.measure import label, regionprops
 import scipy.ndimage as nd
 import numpy as np
@@ -48,10 +48,10 @@ class ImageSequences:
 
         background_size = max([region.area for region in regionprops(label(and_img, connectivity=3))])
         remove_objects = remove_small_objects(and_img, min_size=(background_size - 1), connectivity=3)
-        closed = np.array([closing(img, disk(3)) for img in remove_objects])
+        dilated = np.array([dilation(img, disk(5)) for img in remove_objects])
+        closed = np.array([closing(img, disk(5)) for img in dilated])
         not_background = max([region.area for region in regionprops(label(np.logical_not(closed), connectivity=3))])
-        remove_holes = remove_small_holes(closed, area_threshold=(not_background - 1), connectivity=3)
-        # dilations = np.array(doce(remove_objects, "3d")).astype(np.bool_)
+        remove_holes = remove_small_holes(dilated, area_threshold=(not_background - 1), connectivity=3)
 
         return remove_holes
 
