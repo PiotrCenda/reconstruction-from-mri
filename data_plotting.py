@@ -13,9 +13,8 @@ def plot_3d(image):
     xm, ym, zm = np.mgrid[0:image.shape[0], 0:image.shape[2], 0:image.shape[1]].astype(np.float64)
     xm = xm * 5
 
-    points = list()
-
     print(f"\nCreating points of 3d image: ")
+    points = list()
 
     for d, x, y, z in tqdm(zip(image.ravel(), xm.ravel(), ym.ravel(), zm.ravel())):
         if d:

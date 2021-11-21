@@ -164,4 +164,5 @@ def save_tif(img, img_name=None, folder='test_masks'):
     except OSError:
         print(mkdir_error_message)
 
+    print(f"Saving \"{img_name}\" in \"{folder_path}\"...")
     io.imsave(img_path, img_as_ubyte(img))
