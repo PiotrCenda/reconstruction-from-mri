@@ -1,6 +1,8 @@
 import numpy as np
 import scipy.ndimage as nd
 from scipy import optimize
+from skimage.segmentation import flood
+from skimage.morphology import remove_small_holes, remove_small_objects, closing, disk
 
 
 def rotation_matrix_x(theta):
@@ -120,12 +122,23 @@ def rigid_transform(img, args):
 
 
 def ssd(a, b):
-    dif = np.logical_xor(a.ravel(), b.ravel())
-    return np.dot(dif, dif)
+    err = np.logical_xor(a, b)
+    rmse = np.sqrt(np.sum(err * err) / (a.shape[0] * a.shape[1]))
+    print(f"rmse: {rmse}")
+    return rmse
+
+
+def model_to_register_fitting(image, flood_thresh=0.05):
+    median = np.array([nd.median_filter(img, footprint=disk(2)) for img in image]).astype(np.float64)
+    model = np.array([flood(img, (0, 0), tolerance=flood_thresh) for img in median])
+    closed = np.array([closing(img, disk(5)) for img in model])
+    remove_noise = np.array([remove_small_holes(img, area_threshold=1500) for img in closed])
+    remove_noise2 = np.array([remove_small_objects(img, min_size=1500) for img in remove_noise])
+    return np.array([nd.median_filter(img, footprint=disk(3)) for img in remove_noise2])
 
 
 def register_image(image_model, image_to_change):
-    start_params = np.array([0, 0, 0, 0, 0, 0])
+    start_params = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0])
 
     def cost_function(params):
         image_changed = rigid_transform(image_to_change, params)
