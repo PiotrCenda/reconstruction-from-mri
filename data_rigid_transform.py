@@ -3,6 +3,9 @@ import scipy.ndimage as nd
 from scipy import optimize
 from skimage.segmentation import flood
 from skimage.morphology import remove_small_holes, remove_small_objects, closing, disk
+from skimage.feature import canny
+
+from data_manipulation import timer_block, save_tif
 
 
 def rotation_matrix_x(theta):
@@ -44,14 +47,14 @@ def rotation_matrix_z(theta):
     return rot_mat
 
 
-def translate_matrix(x, y, z):
+def translate_matrix(x, y, z, sx, sy, sz):
     """
     returns rotation matrix for axis
     theta should be in radians
     """
-    trans_mat = np.array([[1, 0, 0, x],
-                          [0, 1, 0, y],
-                          [0, 0, 1, z],
+    trans_mat = np.array([[sx, 0, 0, x],
+                          [0, sy, 0, y],
+                          [0, 0, sz, z],
                           [0, 0, 0, 1]])
 
     return trans_mat
@@ -88,7 +91,8 @@ def axises_rotations_matrix(theta1, theta2, theta3):
 
 
 def rigid_transform(img, args):
-    alpha, beta, gamma, x, y, z, = args[0], args[1], args[2], args[3], args[4], args[5]
+    alpha, beta, gamma, x, y, z, sx, sy, sz = args[0], args[1], args[2], args[3], args[4], args[5], \
+                                              args[6], args[8], args[7]
 
     # coordinates for 3d image
     grid_x, grid_y, grid_z = np.meshgrid(np.arange(img.shape[1]),
@@ -103,11 +107,12 @@ def rigid_transform(img, args):
                     new_grid_z, np.ones(new_grid_x.shape)])
 
     # rotate matrix
-    transform_rotation_matrix = axises_rotations_matrix(alpha, beta, gamma) @ translate_matrix(x, y, z)
+    transform_rotation_matrix = axises_rotations_matrix(alpha, beta, gamma) @ translate_matrix(x, y, z, sx, sy, sz)
+    # transform_rotation_matrix = transform_rotation_matrix
     centered_transform_rotation_matrix = center_matrix(transform_rotation_matrix, img.shape)
 
     # calculate new coordinates
-    m_x_transformed = np.linalg.pinv(centered_transform_rotation_matrix) @ m_x
+    m_x_transformed = np.linalg.inv(centered_transform_rotation_matrix) @ m_x
 
     trans_grid_x = m_x_transformed[1].reshape(grid_x.shape)
     trans_grid_y = m_x_transformed[0].reshape(grid_y.shape)
@@ -121,30 +126,48 @@ def rigid_transform(img, args):
     return transformed_image
 
 
-def ssd(a, b):
-    err = np.logical_xor(a, b)
-    rmse = np.sqrt(np.sum(err * err) / (a.shape[0] * a.shape[1]))
-    print(f"rmse: {rmse}")
-    return rmse
-
-
 def model_to_register_fitting(image, flood_thresh=0.05):
     median = np.array([nd.median_filter(img, footprint=disk(2)) for img in image]).astype(np.float64)
     model = np.array([flood(img, (0, 0), tolerance=flood_thresh) for img in median])
     closed = np.array([closing(img, disk(5)) for img in model])
     remove_noise = np.array([remove_small_holes(img, area_threshold=1500) for img in closed])
     remove_noise2 = np.array([remove_small_objects(img, min_size=1500) for img in remove_noise])
-    return np.array([nd.median_filter(img, footprint=disk(3)) for img in remove_noise2])
+    median2 = np.array([nd.median_filter(img, footprint=disk(2)) for img in remove_noise2])
+    return np.array([canny(img, sigma=2) for img in median2]).astype(np.bool_)
+
+
+def ssd(a, b):
+    err = np.logical_xor(a[1:-1, 1:-1, 1:-1], b[1:-1, 1:-1, 1:-1]).astype(np.int64)
+    rmse = np.sqrt(np.sum([img.ravel() for img in err]))
+    print(f"Cost function: {rmse}")
+    return rmse
 
 
 def register_image(image_model, image_to_change):
-    start_params = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0])
+    start_params = np.array([0, 0, 0, 3.50713579e-04, 2.56382387e-04, -2.36681565e-04, 9.40513164e-01, 9.38176829e-01,
+                             1.00128937e+00])
 
     def cost_function(params):
         image_changed = rigid_transform(image_to_change, params)
         print(f"Checking parameters: {params}")
         return ssd(image_changed, image_model)
 
-    best_parameters = optimize.fmin(func=cost_function, x0=start_params)
+    best_parameters = optimize.fmin_powell(func=cost_function, x0=start_params)
 
     return best_parameters
+
+
+def auto_t1_t2_fitting(img):
+    t1 = model_to_register_fitting(img.t1, flood_thresh=0.05)
+    t2 = model_to_register_fitting(img.t2, flood_thresh=0.03)
+    save_tif(t1, img_name="t1_flood")
+    save_tif(t2, img_name="t2_flood")
+
+    with timer_block('t2 to t1 fitting'):
+        params = register_image(image_model=t1, image_to_change=t2)
+
+    print(params)
+
+    img.t2_rigid_transform(parameters=params)
+    t2_fitted = model_to_register_fitting(img.t2, flood_thresh=0.03)
+    save_tif(t2_fitted, img_name="t2_flood_fitted")

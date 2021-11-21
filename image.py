@@ -39,9 +39,6 @@ class ImageSequences:
     def t2_rigid_transform(self, parameters):
         self.__t2 = rigid_transform(self.__t2, parameters)
 
-    def median(self):
-        return np.array([nd.median_filter(img, footprint=disk(3)) for img in self.__t1]).astype(np.float64)
-
     @func_timer
     def background_mask(self):
         median_t1 = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t1]).astype(np.float64)
@@ -79,11 +76,11 @@ class ImageSequences:
 
     @func_timer
     def flood_mask(self):
-        median_t1 = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t1]).astype(np.float64)
-        median_t2 = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t2]).astype(np.float64)
+        median_t1 = np.array([nd.median_filter(img, footprint=disk(3)) for img in self.__t1]).astype(np.float64)
+        median_t2 = np.array([nd.median_filter(img, footprint=disk(3)) for img in self.__t2]).astype(np.float64)
 
-        flood_mask_t1 = flood(median_t1, (0, 0, 0), tolerance=0.5)
-        flood_mask_t2 = flood(median_t2, (0, 0, 0), tolerance=0.6)
+        flood_mask_t1 = flood(median_t1, (0, 0, 0), tolerance=0.05)
+        flood_mask_t2 = flood(median_t2, (0, 0, 0), tolerance=0.06)
 
         remove_noise_t1 = np.array([remove_small_holes(img, area_threshold=15) for img in flood_mask_t1])
         remove_noise_t2 = np.array([remove_small_holes(img, area_threshold=15) for img in flood_mask_t2])

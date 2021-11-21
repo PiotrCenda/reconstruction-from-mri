@@ -1,14 +1,13 @@
 import os
 import numpy as np
-from skimage.filters import median
-from skimage.morphology import disk, remove_small_holes, remove_small_objects
 
 from data_loader import read_data_from_folder
 from data_manipulation import save_tif, timer_block
 from data_plotting import plot_3d
-from data_rigid_transform import register_image, rigid_transform
 
-params = np.array([0, 0, 0, 0, 0, 0, 0.95, 0.96, 1])
+# parameters calculated by auto fitting function
+params_auto = np.array([2.01109052e-04, 1.57808256e-06, 3.65095064e-05, 3.50697591e-04, 2.56535195e-04, -2.36831914e-04,
+                        9.40511337e-01, 9.38207923e-01, 1.00130253e+00])
 
 # TODO: make masks
 # TODO: make automatic rigid transform (?)
@@ -16,18 +15,10 @@ params = np.array([0, 0, 0, 0, 0, 0, 0.95, 0.96, 1])
 
 if __name__ == '__main__':
     img = read_data_from_folder(os.path.abspath('data/head'))
-    # img.t2_rigid_transform(parameters=params)
+    img.t2_rigid_transform(parameters=params_auto)
 
-    # t1 to t2 fitting - need fix...
-    model = np.array([remove_small_objects(remove_small_holes(median(img, selem=disk(3))), min_size=100)
-                      for img in (img.t1 > 0.05)]).astype(np.float64)
-    img_to_change = np.array([remove_small_objects(remove_small_holes(median(img, selem=disk(3))), min_size=100)
-                              for img in (img.t2 > 0.05)]).astype(np.float64)
+    with timer_block("bones mask making"):
+        bones = img.bones_mask()
+        save_tif(bones, img_name="bones_mask")
+        plot_3d(bones)
 
-    save_tif(model, img_name="model")
-    save_tif(img_to_change, img_name="img_to_change")
-
-    with timer_block('t2 to t1 registration'):
-        params = register_image(image_model=model, image_to_change=img_to_change)
-
-    print(params)
