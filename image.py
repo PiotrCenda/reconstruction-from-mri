@@ -1,5 +1,6 @@
 from skimage.segmentation import flood
 from skimage.morphology import remove_small_holes, remove_small_objects, disk, closing
+from skimage.measure import label, regionprops
 import scipy.ndimage as nd
 import numpy as np
 
@@ -41,17 +42,18 @@ class ImageSequences:
 
     @func_timer
     def background_mask(self):
-        median_t1 = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t1]).astype(np.float64)
-        median_t2 = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t2]).astype(np.float64)
+        background_flood_t1 = np.array([flood(img, (0, 0), tolerance=0.05) for img in self.__t1])
+        background_flood_t2 = np.array([flood(img, (0, 0), tolerance=0.05) for img in self.__t2])
+        and_img = np.logical_and(background_flood_t1, background_flood_t2)
 
-        background_flood_t1 = np.array([flood(img, (0, 0), tolerance=0.05) for img in median_t1])
-        background_flood_t2 = np.array([flood(img, (0, 0), tolerance=0.04) for img in median_t2])
-        or_img = np.logical_and(background_flood_t1, background_flood_t2)
+        background_size = max([region.area for region in regionprops(label(and_img, connectivity=3))])
+        remove_objects = remove_small_objects(and_img, min_size=(background_size - 1), connectivity=3)
+        closed = np.array([closing(img, disk(3)) for img in remove_objects])
+        not_background = max([region.area for region in regionprops(label(np.logical_not(closed), connectivity=3))])
+        remove_holes = remove_small_holes(closed, area_threshold=(not_background - 1), connectivity=3)
+        # dilations = np.array(doce(remove_objects, "3d")).astype(np.bool_)
 
-        remove_noise = np.array([remove_small_holes(img, area_threshold=300) for img in or_img])
-        remove_noise_2 = np.array([remove_small_objects(img, min_size=300) for img in remove_noise])
-
-        return np.array([closing(img, disk(5)) for img in remove_noise_2]).astype(np.float64)
+        return remove_holes
 
     @func_timer
     def soft_tissues(self):
@@ -66,27 +68,20 @@ class ImageSequences:
         thresh_t1 = np.logical_or(thresh_t1_light, thresh_t1_dark)
         thresh_t2 = median_t2 >= 0.3
 
-        remove_noise_t1 = np.array([remove_small_holes(img, area_threshold=20) for img in thresh_t1])
-        remove_noise_t2 = np.array([remove_small_holes(img, area_threshold=20) for img in thresh_t2])
-
-        sum_t1_t2 = np.logical_or(remove_noise_t1, remove_noise_t2)
+        sum_t1_t2 = np.logical_or(thresh_t1, thresh_t2)
         result = np.array([remove_small_objects(img, min_size=50) for img in sum_t1_t2])
 
         return result
 
     @func_timer
     def flood_mask(self):
-        median_t1 = np.array([nd.median_filter(img, footprint=disk(3)) for img in self.__t1]).astype(np.float64)
-        median_t2 = np.array([nd.median_filter(img, footprint=disk(3)) for img in self.__t2]).astype(np.float64)
+        median_t1 = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t1]).astype(np.float64)
+        median_t2 = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t2]).astype(np.float64)
 
-        flood_mask_t1 = flood(median_t1, (0, 0, 0), tolerance=0.05)
-        flood_mask_t2 = flood(median_t2, (0, 0, 0), tolerance=0.06)
+        flood_mask_t1 = flood(median_t1, (0, 0, 0), tolerance=0.07)
+        flood_mask_t2 = flood(median_t2, (0, 0, 0), tolerance=0.07)
 
-        remove_noise_t1 = np.array([remove_small_holes(img, area_threshold=15) for img in flood_mask_t1])
-        remove_noise_t2 = np.array([remove_small_holes(img, area_threshold=15) for img in flood_mask_t2])
-        remove_noise2_t1 = np.array([remove_small_objects(img, min_size=100) for img in remove_noise_t1])
-        remove_noise2_t2 = np.array([remove_small_objects(img, min_size=100) for img in remove_noise_t2])
-        result = np.logical_or(remove_noise2_t1, remove_noise2_t2)
+        result = np.logical_or(flood_mask_t1, flood_mask_t2)
 
         return result
 
@@ -97,13 +92,4 @@ class ImageSequences:
         internal_flood = np.logical_and(no_background, self.flood_mask())
         no_soft_tissues = np.logical_and(no_background, np.logical_not(self.soft_tissues()))
 
-        save_tif(np.array(no_background).astype(np.float64), img_name="no_background")
-        save_tif(np.array(internal_flood).astype(np.float64), img_name="internal_flood")
-        save_tif(np.array(no_soft_tissues).astype(np.float64), img_name="no_soft_tissues")
-
-        plot_3d(no_background)
-        plot_3d(internal_flood)
-        plot_3d(no_soft_tissues)
-
         return remove_small_objects(np.logical_and(internal_flood, no_soft_tissues), min_size=30)
-
