@@ -1,12 +1,12 @@
 from skimage.segmentation import flood
 from skimage.morphology import remove_small_holes, remove_small_objects, disk, closing, dilation
 from skimage.measure import label, regionprops
-import scipy.ndimage as nd
+from skimage.filters.rank import mean_bilateral
+from skimage.util import img_as_ubyte
 import numpy as np
 
 from data_rigid_transform import rigid_transform
-from data_manipulation import func_timer, doce, save_tif
-from data_plotting import plot_3d
+from data_manipulation import func_timer, save_tif
 
 
 class ImageSequences:
@@ -48,7 +48,7 @@ class ImageSequences:
 
         background_size = max([region.area for region in regionprops(label(and_img, connectivity=3))])
         remove_objects = remove_small_objects(and_img, min_size=(background_size - 1), connectivity=3)
-        dilated = np.array([dilation(img, disk(5)) for img in remove_objects])
+        dilated = np.array([dilation(img, disk(10)) for img in remove_objects])
         closed = np.array([closing(img, disk(5)) for img in dilated])
         not_background = max([region.area for region in regionprops(label(np.logical_not(closed), connectivity=3))])
         remove_holes = remove_small_holes(dilated, area_threshold=(not_background - 1), connectivity=3)
@@ -58,38 +58,29 @@ class ImageSequences:
     @func_timer
     def soft_tissues(self):
         """
-        ! experiment dark/light soft tissues and erosion etc.
+        update filter and noise reduction
         """
-        median_t1 = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t1]).astype(np.float64)
-        median_t2 = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t2]).astype(np.float64)
+        t1 = np.array([mean_bilateral(img_as_ubyte(img), disk(2)) for img in self.__t1])
+        t2 = np.array([mean_bilateral(img_as_ubyte(img), disk(2)) for img in self.__t2])
 
-        thresh_t1_dark = np.logical_and(median_t1 <= 0.4, median_t1 >= 0.13)
-        thresh_t1_light = median_t1 >= 0.4
-        thresh_t1 = np.logical_or(thresh_t1_light, thresh_t1_dark)
-        thresh_t2 = median_t2 >= 0.3
+        t1 = np.array(((t1 - np.min(t1)) / np.ptp(t1))).astype(np.float64)
+        t2 = np.array(((t2 - np.min(t2)) / np.ptp(t2))).astype(np.float64)
 
-        sum_t1_t2 = np.logical_or(thresh_t1, thresh_t2)
-        result = np.array([remove_small_objects(img, min_size=50) for img in sum_t1_t2])
+        thresh_t1 = t1 >= 0.1
+        thresh_t2 = t2 >= 0.14
 
-        return result
-
-    @func_timer
-    def flood_mask(self):
-        median_t1 = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t1]).astype(np.float64)
-        median_t2 = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t2]).astype(np.float64)
-
-        flood_mask_t1 = flood(median_t1, (0, 0, 0), tolerance=0.07)
-        flood_mask_t2 = flood(median_t2, (0, 0, 0), tolerance=0.07)
-
-        result = np.logical_or(flood_mask_t1, flood_mask_t2)
+        result = np.logical_or(thresh_t1, thresh_t2)
 
         return result
 
     @func_timer
     def bones_mask(self):
-        # check logic in this function !!!
-        no_background = doce(np.logical_not(self.background_mask()), "10e")
-        internal_flood = np.logical_and(no_background, self.flood_mask())
-        no_soft_tissues = np.logical_and(no_background, np.logical_not(self.soft_tissues()))
+        """
+        remove sinuses and air
+        """
+        no_soft_tissues = np.logical_not(np.logical_or(self.background_mask(), self.soft_tissues()))
 
-        return remove_small_objects(np.logical_and(internal_flood, no_soft_tissues), min_size=30)
+        skull_size = max([region.area for region in regionprops(label(no_soft_tissues, connectivity=3))])
+        result = remove_small_objects(no_soft_tissues, min_size=(skull_size - 1), connectivity=3)
+
+        return result
