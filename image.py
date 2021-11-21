@@ -44,14 +44,11 @@ class ImageSequences:
 
     @func_timer
     def background_mask(self):
-        """
-        based on t1 and t2 --> t2 gives problem with mask leaks and additionally t1 and t2 are shifted...
-        """
         median_t1 = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t1]).astype(np.float64)
         median_t2 = np.array([nd.median_filter(img, footprint=disk(2)) for img in self.__t2]).astype(np.float64)
 
-        background_flood_t1 = np.array([flood(img, (0, 0), tolerance=0.04) for img in median_t1])
-        background_flood_t2 = np.array([flood(img, (0, 0), tolerance=0.03) for img in median_t2])
+        background_flood_t1 = np.array([flood(img, (0, 0), tolerance=0.05) for img in median_t1])
+        background_flood_t2 = np.array([flood(img, (0, 0), tolerance=0.04) for img in median_t2])
         or_img = np.logical_and(background_flood_t1, background_flood_t2)
 
         remove_noise = np.array([remove_small_holes(img, area_threshold=300) for img in or_img])
