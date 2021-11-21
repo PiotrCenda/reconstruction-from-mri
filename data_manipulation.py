@@ -24,7 +24,7 @@ def doce(img, command: str):
     command = command.lower()
     command_len = len(command)
     current_element = 0
-    img = img.astype(int)
+    img = img.astype(np.float64)
 
     while current_element < command_len:
         if command[current_element].isnumeric():
@@ -41,7 +41,7 @@ def doce(img, command: str):
             img = command_dict[command[current_element]](img)
         current_element += 1
 
-    return img.astype(np.uint8)
+    return img.astype(np.float64)
 
 
 def func_timer(function):
