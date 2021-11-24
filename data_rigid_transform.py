@@ -47,30 +47,16 @@ def rotation_matrix_z(theta):
     return rot_mat
 
 
-def translate_matrix(x, y, z, sx, sy, sz):
+def translate_matrix(x, y, z, hxy, hxz, hyz, hyx, hzx, hzy):
     """
     returns rotation matrix for axis
     theta should be in radians
     """
-    trans_mat = np.array([[sx, 0, 0, x],
-                          [0, sy, 0, y],
-                          [0, 0, sz, z],
+    trans_mat = np.array([[1, hxy, hxz, x],
+                          [hyx, 1, hyz, y],
+                          [hzx, hzy, 1, z],
                           [0, 0, 0, 1]])
-
     return trans_mat
-
-
-def scale_matrix(x, y, z):
-    """
-    returns scale matrix for axis
-    theta should be in radians
-    """
-    scale_mat = np.array([[x, 0, 0, 0],
-                          [0, y, 0, 0],
-                          [0, 0, z, 0],
-                          [0, 0, 0, 1]])
-
-    return scale_mat
 
 
 def center_matrix(transform, shape):
@@ -91,8 +77,8 @@ def axises_rotations_matrix(theta1, theta2, theta3):
 
 
 def rigid_transform(img, args):
-    alpha, beta, gamma, x, y, z, sx, sy, sz = args[0], args[1], args[2], args[3], args[4], args[5], \
-                                              args[6], args[8], args[7]
+    alpha, beta, gamma, x, y, z, sx, sy, sz, hxy, hxz, hzy = args[0], args[1], args[2], args[3], args[4], args[5], \
+                                                             args[6], args[8], args[7], args[9], args[10], args[11]
 
     # coordinates for 3d image
     grid_x, grid_y, grid_z = np.meshgrid(np.arange(img.shape[1]),
@@ -107,8 +93,8 @@ def rigid_transform(img, args):
                     new_grid_z, np.ones(new_grid_x.shape)])
 
     # rotate matrix
-    transform_rotation_matrix = axises_rotations_matrix(alpha, beta, gamma) @ translate_matrix(x, y, z, sx, sy, sz)
-    # transform_rotation_matrix = transform_rotation_matrix
+    transform_rotation_matrix = axises_rotations_matrix(alpha, beta, gamma) \
+                                @ translate_matrix(x, y, z, sx, sy, sz, hxy, hxz, hzy)
     centered_transform_rotation_matrix = center_matrix(transform_rotation_matrix, img.shape)
 
     # calculate new coordinates
@@ -145,7 +131,7 @@ def ssd(a, b):
 
 def register_image(image_model, image_to_change):
     start_params = np.array([0, 0, 0, 3.50713579e-04, 2.56382387e-04, -2.36681565e-04, 9.40513164e-01, 9.38176829e-01,
-                             1.00128937e+00])
+                             1.00128937e+00, 0, 0, 0])
 
     def cost_function(params):
         image_changed = rigid_transform(image_to_change, params)
