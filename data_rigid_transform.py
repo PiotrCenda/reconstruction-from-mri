@@ -63,7 +63,7 @@ def center_matrix(transform, shape):
     x_mid = int((shape[1] - 1) / 2)
     y_mid = int((shape[0] - 1) / 2)
     z_mid = int((shape[2] - 1) / 2)
-    # A @ transform @ A^(-1)
+
     a = np.array([[1, 0, 0, x_mid],
                   [0, 1, 0, y_mid],
                   [0, 0, 1, z_mid],
@@ -130,8 +130,8 @@ def ssd(a, b):
 
 
 def register_image(image_model, image_to_change):
-    # start_params_without_shearing = np.array([0, 0, 0, 3.50713579e-04, 2.56382387e-04, -2.36681565e-04, 9.40513164e-01, 9.38176829e-01,
-    #                          1.00128937e+00, 0, 0, 0])
+    # start_params_without_shearing -> np.array([0, 0, 0, 3.50713579e-04, 2.56382387e-04, -2.36681565e-04,
+    #                                               9.40513164e-01, 9.38176829e-01, 1.00128937e+00, 0, 0, 0])
     start_params = np.array([1.51709147e+00, 1.18339327e+00, -1.17477642e-02, 7.45291130e-02, -1.40245845e+00,
                              4.35379594e-01, -2.87405872e-01, -4.27344509e+01, 7.68620321e-12, -3.70788805e-03,
                              -7.19916508e-02, -2.79734267e-03])
