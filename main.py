@@ -3,7 +3,7 @@ import numpy as np
 
 from data_loader import read_data_from_folder
 from data_manipulation import save_tif, timer_block
-from data_plotting import plot_3d
+from data_plotting import plot_3d_surface, plot_3d_points
 
 # parameters calculated by auto fitting function
 params_auto = np.array([2.01109052e-04, 1.57808256e-06, 3.65095064e-05, 3.50697591e-04, 2.56535195e-04, -2.36831914e-04,
@@ -19,8 +19,5 @@ if __name__ == '__main__':
     img.t2_rigid_transform(parameters=params_auto)
 
     with timer_block("bones mask making"):
-        soft = img.soft_tissues()
-        save_tif(soft, img_name="soft_mask")
         bones = img.bones_mask()
-        save_tif(bones, img_name="bones_test")
-        plot_3d(bones)
+        plot_3d_surface(bones)
