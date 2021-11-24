@@ -108,7 +108,6 @@ def rigid_transform(img, args):
 
     # rotate matrix
     transform_rotation_matrix = axises_rotations_matrix(alpha, beta, gamma) @ translate_matrix(x, y, z, sx, sy, sz)
-    # transform_rotation_matrix = transform_rotation_matrix
     centered_transform_rotation_matrix = center_matrix(transform_rotation_matrix, img.shape)
 
     # calculate new coordinates

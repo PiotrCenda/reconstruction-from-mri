@@ -8,7 +8,7 @@ import multiprocessing as mp
 from multiprocessing.pool import ThreadPool
 
 from data_rigid_transform import rigid_transform
-from data_manipulation import func_timer, save_tif
+from data_manipulation import func_timer
 
 
 class ImageSequences:
@@ -26,14 +26,6 @@ class ImageSequences:
     def __copy__(self, data_dict=None):
         copy = ImageSequences(self.__all)
         return copy
-
-    def __call__(self, x):
-        if x["func"] == "background_mask":
-            return self.background_mask
-        elif x["func"] == "soft_tissues":
-            return self.background_mask
-        else:
-            return self
 
     @property
     def t1(self):
