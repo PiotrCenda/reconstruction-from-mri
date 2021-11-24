@@ -1,12 +1,15 @@
+import numpy as np
 from skimage.segmentation import flood
 from skimage.morphology import remove_small_holes, remove_small_objects, disk, closing, dilation
 from skimage.measure import label, regionprops
 from skimage.filters.rank import mean_bilateral
 from skimage.util import img_as_ubyte
-import numpy as np
+import multiprocessing as mp
+from multiprocessing.pool import ThreadPool
+from itertools import repeat
 
 from data_rigid_transform import rigid_transform
-from data_manipulation import func_timer, save_tif
+from data_manipulation import func_timer
 
 
 class ImageSequences:
@@ -42,16 +45,20 @@ class ImageSequences:
 
     @func_timer
     def background_mask(self):
-        background_flood_t1 = np.array([flood(img, (0, 0), tolerance=0.05) for img in self.__t1])
-        background_flood_t2 = np.array([flood(img, (0, 0), tolerance=0.05) for img in self.__t2])
-        and_img = np.logical_and(background_flood_t1, background_flood_t2)
+        with mp.Pool(processes=mp.cpu_count()) as pool:
+            p1 = pool.map_async(flood_wrap, [image for image in self.__t1])
+            p2 = pool.map_async(flood_wrap, [image for image in self.__t2])
 
-        background_size = max([region.area for region in regionprops(label(and_img, connectivity=3))])
-        remove_objects = remove_small_objects(and_img, min_size=(background_size - 1), connectivity=3)
-        dilated = np.array([dilation(img, disk(10)) for img in remove_objects])
-        closed = np.array([closing(img, disk(5)) for img in dilated])
-        not_background = max([region.area for region in regionprops(label(np.logical_not(closed), connectivity=3))])
-        remove_holes = remove_small_holes(dilated, area_threshold=(not_background - 1), connectivity=3)
+            and_img = np.logical_and(p1.get(), p2.get())
+
+            background_size = max([region.area for region in regionprops(label(and_img, connectivity=3))])
+            remove_objects = remove_small_objects(and_img, min_size=(background_size - 1), connectivity=3)
+
+            dilated = pool.starmap(dilation, zip(remove_objects, repeat(disk(10))))
+            closed = pool.starmap(closing, zip(dilated, repeat(disk(5))))
+
+            not_background = max([region.area for region in regionprops(label(np.logical_not(closed), connectivity=3))])
+            remove_holes = remove_small_holes(np.array(closed), area_threshold=(not_background - 1), connectivity=3)
 
         return remove_holes
 
@@ -60,8 +67,11 @@ class ImageSequences:
         """
         update filter and noise reduction
         """
-        t1 = np.array([mean_bilateral(img_as_ubyte(img), disk(2)) for img in self.__t1])
-        t2 = np.array([mean_bilateral(img_as_ubyte(img), disk(2)) for img in self.__t2])
+        with mp.Pool(processes=mp.cpu_count()) as pool:
+            p1 = pool.map_async(mean_bilateral_wrap, [image for image in self.__t1])
+            p2 = pool.map_async(mean_bilateral_wrap, [image for image in self.__t2])
+            t1 = p1.get()
+            t2 = p2.get()
 
         t1 = np.array(((t1 - np.min(t1)) / np.ptp(t1))).astype(np.float64)
         t2 = np.array(((t2 - np.min(t2)) / np.ptp(t2))).astype(np.float64)
@@ -76,11 +86,23 @@ class ImageSequences:
     @func_timer
     def bones_mask(self):
         """
-        remove sinuses and air
+        remove sinuses and air, upgrade multiprocessing
         """
-        no_soft_tissues = np.logical_not(np.logical_or(self.background_mask(), self.soft_tissues()))
+        with ThreadPool(processes=mp.cpu_count()) as pool:
+            p1 = pool.apply_async(self.background_mask)
+            p2 = pool.apply_async(self.soft_tissues)
+
+            no_soft_tissues = np.logical_not(np.logical_or(p1.get(), p2.get()))
 
         skull_size = max([region.area for region in regionprops(label(no_soft_tissues, connectivity=3))])
         result = remove_small_objects(no_soft_tissues, min_size=(skull_size - 1), connectivity=3)
 
         return result
+
+
+def mean_bilateral_wrap(img):
+    return mean_bilateral(img_as_ubyte(img), disk(2))
+
+
+def flood_wrap(img):
+    return flood(img, seed_point=(0, 0), tolerance=0.05)

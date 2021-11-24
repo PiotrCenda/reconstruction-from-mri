@@ -1,6 +1,7 @@
 import os
 import numpy as np
 from skimage import io
+from tqdm import tqdm
 
 from image import ImageSequences
 
@@ -23,8 +24,11 @@ def read_data_from_folder(folder_path: str):
     img_dict = {'T1': None,
                 'T2': None}
 
-    for key in img_dict.keys():
+    print(f"Loading data from folder {folder_path}...\n")
+
+    for key in tqdm(img_dict.keys()):
         img_path = os.path.join(folder_path, str(key + '.tif'))
+
         try:
             img_dict[key] = normalize(io.imread(img_path))
         except FileNotFoundError:
