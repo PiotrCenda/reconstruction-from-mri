@@ -63,6 +63,7 @@ def timer_block(name: str):
     """
     context manager for block of code execution time measuring
     """
+    print(f"\nStarting block named: \"{name}\"\n")
     start_time = perf_counter()
     yield
     time_passed = timedelta(seconds=perf_counter() - start_time)

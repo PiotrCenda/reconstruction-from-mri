@@ -6,6 +6,7 @@ from skimage.filters.rank import mean_bilateral
 from skimage.util import img_as_ubyte
 import multiprocessing as mp
 from multiprocessing.pool import ThreadPool
+from itertools import repeat
 
 from data_rigid_transform import rigid_transform
 from data_manipulation import func_timer
@@ -53,8 +54,8 @@ class ImageSequences:
             background_size = max([region.area for region in regionprops(label(and_img, connectivity=3))])
             remove_objects = remove_small_objects(and_img, min_size=(background_size - 1), connectivity=3)
 
-            dilated = pool.map(dilate_wrap, [image for image in remove_objects])
-            closed = pool.map(closing_wrap, [image for image in dilated])
+            dilated = pool.starmap(dilation, zip(remove_objects, repeat(disk(10))))
+            closed = pool.starmap(closing, zip(dilated, repeat(disk(5))))
 
             not_background = max([region.area for region in regionprops(label(np.logical_not(closed), connectivity=3))])
             remove_holes = remove_small_holes(np.array(closed), area_threshold=(not_background - 1), connectivity=3)
@@ -105,11 +106,3 @@ def mean_bilateral_wrap(img):
 
 def flood_wrap(img):
     return flood(img, seed_point=(0, 0), tolerance=0.05)
-
-
-def dilate_wrap(img):
-    return dilation(img, disk(10))
-
-
-def closing_wrap(img):
-    return closing(img, disk(5))

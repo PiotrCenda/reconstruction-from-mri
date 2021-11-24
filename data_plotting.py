@@ -1,6 +1,5 @@
 import numpy as np
 import pyvista as pv
-from tqdm import tqdm
 from skimage.measure import marching_cubes_lewiner
 
 from data_manipulation import func_timer
@@ -12,10 +11,10 @@ def plot_3d_points(image):
     xm, ym, zm = np.mgrid[0:image.shape[0], 0:image.shape[2], 0:image.shape[1]].astype(np.float64)
     xm = xm * 5
 
-    print("\nCreating points of 3d image: ")
+    print("\nCreating points of 3d image...")
     points = list()
 
-    for d, x, y, z in tqdm(zip(image.ravel(), xm.ravel(), ym.ravel(), zm.ravel())):
+    for d, x, y, z in zip(image.ravel(), xm.ravel(), ym.ravel(), zm.ravel()):
         if d:
             points.append(np.array([x, y, z]))
 
@@ -28,7 +27,7 @@ def plot_3d_points(image):
 def plot_3d_surface(image):
     image = image[1:-1, 1:-1, 1:-1]
 
-    print("\nCreating vertices and faces of 3d image: ")
+    print("\nCreating vertices and faces of 3d image...")
     vertices, faces, _, _ = marching_cubes_lewiner(image, spacing=(5, 1, 1))
 
     faces = np.hstack([np.concatenate(([3], row)) for row in faces])
