@@ -20,4 +20,4 @@ if __name__ == '__main__':
 
     with timer_block("bones mask making"):
         bones = img.bones_mask()
-        plot_3d_points(bones)
+        plot_3d_surface(bones)
