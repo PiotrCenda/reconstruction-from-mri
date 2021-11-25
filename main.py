@@ -4,19 +4,23 @@ import numpy as np
 from data_loader import read_data_from_folder
 from data_manipulation import save_tif, timer_block
 from data_plotting import plot_3d_surface, plot_3d
+from data_rigid_transform import auto_t1_t2_fitting
 
 # parameters calculated by auto fitting function
-params_auto = np.array([1.51709147e+00, 1.18339327e+00, -1.17477642e-02, 7.45291130e-02, -1.40245845e+00,
-                        4.35379594e-01, -2.87405872e-01, -4.27344509e+01, 7.68620321e-12, -3.70788805e-03,
-                        -7.19916508e-02, -2.79734267e-03])
+params_auto = np.array([2.01109052e-04, 1.57808256e-06, 3.65095064e-05, 3.50697591e-04, 2.56535195e-04,
+                        -2.36831914e-04, 9.40511337e-01, 9.38207923e-01, 1.00130253e+00])
 
 # TODO: update soft tissues and bone masks
 
 
 if __name__ == '__main__':
     img = read_data_from_folder(os.path.abspath('data/head'))
-    img.t2_rigid_transform(parameters=params_auto)
+    # img.t2_rigid_transform(parameters=params_auto)
+    save_tif(img.t1,  img_name="t1")
+    save_tif(img.t2, img_name="t2_before")
+    auto_t1_t2_fitting(img)
+    save_tif(img.t2, img_name="t2_after")
 
     with timer_block("bones mask making"):
         bones = img.bones_mask()
-        plot_3d_surface(bones)
+        plot_3d(bones)
