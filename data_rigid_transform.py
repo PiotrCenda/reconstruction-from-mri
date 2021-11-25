@@ -5,7 +5,7 @@ from skimage.segmentation import flood
 from skimage.morphology import remove_small_holes, remove_small_objects, closing, disk
 from skimage.feature import canny
 
-from data_manipulation import timer_block, save_tif
+from data_manipulation import timer_block
 
 
 def rotation_matrix_x(theta):
@@ -124,14 +124,15 @@ def model_to_register_fitting(image, flood_thresh=0.05):
 
 def ssd(a, b):
     err = np.logical_xor(a[1:-1, 1:-1, 1:-1], b[1:-1, 1:-1, 1:-1]).astype(np.int64)
-    rmse = np.sqrt(np.sum([img.ravel() for img in err]))
-    print(f"Cost function: {rmse}")
-    return rmse
+    cost = np.sqrt(np.sum([img.ravel() for img in err]))
+    print(f"Cost function: {cost}")
+    return cost
 
 
 def register_image(image_model, image_to_change):
     # start_params_without_shearing -> np.array([0, 0, 0, 3.50713579e-04, 2.56382387e-04, -2.36681565e-04,
-    #                                               9.40513164e-01, 9.38176829e-01, 1.00128937e+00, 0, 0, 0])
+    #                                            9.40513164e-01, 9.38176829e-01, 1.00128937e+00])
+
     start_params = np.array([1.51709147e+00, 1.18339327e+00, -1.17477642e-02, 7.45291130e-02, -1.40245845e+00,
                              4.35379594e-01, -2.87405872e-01, -4.27344509e+01, 7.68620321e-12, -3.70788805e-03,
                              -7.19916508e-02, -2.79734267e-03])
@@ -149,14 +150,10 @@ def register_image(image_model, image_to_change):
 def auto_t1_t2_fitting(img):
     t1 = model_to_register_fitting(img.t1, flood_thresh=0.05)
     t2 = model_to_register_fitting(img.t2, flood_thresh=0.03)
-    save_tif(t1, img_name="t1_flood")
-    save_tif(t2, img_name="t2_flood")
 
     with timer_block('t2 to t1 fitting'):
         params = register_image(image_model=t1, image_to_change=t2)
 
-    print(params)
+    print(f"\nFinal rigid parameters: {params}")
 
     img.t2_rigid_transform(parameters=params)
-    t2_fitted = model_to_register_fitting(img.t2, flood_thresh=0.03)
-    save_tif(t2_fitted, img_name="t2_flood_fitted")
