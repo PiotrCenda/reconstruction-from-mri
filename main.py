@@ -11,8 +11,6 @@ params_auto = np.array([1.51709147e+00, 1.18339327e+00, -1.17477642e-02, 7.45291
                         -7.19916508e-02, -2.79734267e-03])
 
 # TODO: update soft tissues and bone masks
-# TODO: update automatic rigid transform
-# TODO: add plots from marching_cubes function
 
 
 if __name__ == '__main__':
@@ -21,4 +19,4 @@ if __name__ == '__main__':
 
     with timer_block("bones mask making"):
         bones = img.bones_mask()
-        plot_3d(bones)
+        plot_3d_surface(bones)

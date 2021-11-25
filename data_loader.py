@@ -24,7 +24,7 @@ def read_data_from_folder(folder_path: str):
     img_dict = {'T1': None,
                 'T2': None}
 
-    print(f"Loading data from folder {folder_path}...\n")
+    print(f"Loading data from folder {folder_path}...")
 
     for key in tqdm(img_dict.keys()):
         img_path = os.path.join(folder_path, str(key + '.tif'))
@@ -35,7 +35,7 @@ def read_data_from_folder(folder_path: str):
             print(key, "not found in", folder_path + ". Will be set to None.")
             img_dict[key] = None
 
-    print("Data from folder loaded. Returning as a ImageSequences class.\n")
+    print("Data from folder loaded. Returning as a ImageSequences class.")
     return ImageSequences(img_dict)
 
 
