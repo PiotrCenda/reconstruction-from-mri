@@ -18,6 +18,8 @@ def rotation_matrix_x(theta):
                         [0, -np.sin(theta), np.cos(theta), 0],
                         [0, 0, 0, 1]])
     return rot_mat
+
+
 def rotation_matrix_y(theta):
     """
     returns rotation matrix for axis,
@@ -28,6 +30,8 @@ def rotation_matrix_y(theta):
                         [np.sin(theta), 0, np.cos(theta), 0],
                         [0, 0, 0, 1]])
     return rot_mat
+
+
 def rotation_matrix_z(theta):
     """
     returns rotation matrix for axis
@@ -51,6 +55,8 @@ def translate_matrix(x, y, z, sx, sy, sz):
                           [0, 0, 0, 1]])
 
     return trans_mat
+
+
 def scale_matrix(x, y, z):
     """
     returns scale matrix for axis
@@ -61,6 +67,8 @@ def scale_matrix(x, y, z):
                           [0, 0, z, 0],
                           [0, 0, 0, 1]])
     return scale_mat
+
+
 def center_matrix(transform, shape):
     x_mid = int((shape[1] - 1) / 2)
     y_mid = int((shape[0] - 1) / 2)
@@ -71,6 +79,8 @@ def center_matrix(transform, shape):
                   [0, 0, 1, z_mid],
                   [0, 0, 0, 1]]).reshape(4, 4)
     return a @ transform @ np.linalg.pinv(a)
+
+
 def axises_rotations_matrix(theta1, theta2, theta3):
     return rotation_matrix_x(theta1) @ rotation_matrix_y(theta2) @ rotation_matrix_z(theta3)
 
@@ -117,9 +127,9 @@ def model_to_register_fitting(image, flood_thresh=0.05):
 
 
 def ssd(a, b):
-    err = np.logical_xor(a[1:-1, 1:-1, 1:-1], b[1:-1, 1:-1, 1:-1]).astype(np.int64)
-    cost = np.sqrt(np.sum([img.ravel() for img in err]))
-    print(f"Cost function: {cost}")
+    err = np.logical_and(a[1:-1, 1:-1, 1:-1], b[1:-1, 1:-1, 1:-1]).astype(np.int64)
+    cost = -np.sqrt(np.sum([img.ravel() for img in err]))
+    print(f"Cost function: {-cost}")
     return cost
 
 
@@ -132,16 +142,16 @@ def register_image(image_model, image_to_change):
         print(f"Checking parameters: {params}")
         return ssd(image_changed, image_model)
 
-    best_parameters = optimize.fmin(func=cost_function, x0=start_params)
+    best_parameters = optimize.minimize(fun=cost_function, x0=start_params)
 
-    return best_parameters
+    return best_parameters.x
 
 
 def auto_t1_t2_fitting(img):
     t1_m = model_to_register_fitting(img.t1, flood_thresh=0.05)
     t2_m = model_to_register_fitting(img.t2, flood_thresh=0.03)
-    save_tif(t1_m, img_name="t1_fit")
-    save_tif(t2_m, img_name="t2_fit")
+    save_tif(t1_m, img_name="t1_fit_before")
+    save_tif(t2_m, img_name="t2_fit_before")
 
     with timer_block('t2 to t1 fitting'):
         params = register_image(image_model=t1_m, image_to_change=t2_m)
@@ -150,7 +160,5 @@ def auto_t1_t2_fitting(img):
 
     img.t2_rigid_transform(parameters=params)
 
-    t1_m1 = model_to_register_fitting(img.t1, flood_thresh=0.05)
     t2_m1 = model_to_register_fitting(img.t2, flood_thresh=0.03)
-    save_tif(t1_m1, img_name="t1_fit_after")
     save_tif(t2_m1, img_name="t2_fit_after")
