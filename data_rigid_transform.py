@@ -47,14 +47,14 @@ def rotation_matrix_z(theta):
     return rot_mat
 
 
-def translate_matrix(x, y, z, hxy, hxz, hyz, hyx, hzx, hzy):
+def translate_matrix(x, y, z, hxy, hxz, hyz, hyx, hzx, hzy, sx, sy, sz):
     """
     returns rotation matrix for axis
     theta should be in radians
     """
-    trans_mat = np.array([[1, hxy, hxz, x],
-                          [hyx, 1, hyz, y],
-                          [hzx, hzy, 1, z],
+    trans_mat = np.array([[sx, hxy, hxz, x],
+                          [hyx, sy, hyz, y],
+                          [hzx, hzy, sz, z],
                           [0, 0, 0, 1]])
     return trans_mat
 
@@ -77,8 +77,8 @@ def axises_rotations_matrix(theta1, theta2, theta3):
 
 
 def rigid_transform(img, args):
-    alpha, beta, gamma, x, y, z, sx, sy, sz, hxy, hxz, hzy = args[0], args[1], args[2], args[3], args[4], args[5], \
-                                                             args[6], args[8], args[7], args[9], args[10], args[11]
+    alpha, beta, gamma, x, y, z, hxy, hxz, hyz, hyx, hzx, hzy, sx, sy, sz = args[0], args[1], args[2], args[3], args[4], args[5], \
+                                                             args[6], args[8], args[7], args[9], args[10], args[11], args[12], args[13], args[14]
 
     # coordinates for 3d image
     grid_x, grid_y, grid_z = np.meshgrid(np.arange(img.shape[1]),
@@ -94,7 +94,7 @@ def rigid_transform(img, args):
 
     # rotate matrix
     transform_rotation_matrix = axises_rotations_matrix(alpha, beta, gamma) \
-                                @ translate_matrix(x, y, z, sx, sy, sz, hxy, hxz, hzy)
+                                @ translate_matrix(x, y, z, hxy, hxz, hyz, hyx, hzx, hzy, sx, sy, sz)
     centered_transform_rotation_matrix = center_matrix(transform_rotation_matrix, img.shape)
 
     # calculate new coordinates
