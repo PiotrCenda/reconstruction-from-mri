@@ -2,6 +2,7 @@
 # data folders
 data/
 results/
+temp/
 
 # leave one pair of images in data for demonstration
 !data/

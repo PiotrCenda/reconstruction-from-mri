@@ -148,9 +148,9 @@ def save_img_array_to_tif(path: str):
     del tirm_images
 
 
-def save_tif(img, img_name=None, folder='test_masks'):
+def save_tif(img, img_name=None, folder='tests'):
     """
-    Saves .tif image as file in "results" folder.
+    Saves .tif image as file in default "results" or any given folder.
     """
     folder_path = os.path.join("results", folder)
 

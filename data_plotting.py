@@ -19,7 +19,7 @@ def plot_3d(image):
 @func_timer
 def plot_3d_surface(image):
     print("Creating model surface...")
-    points, faces, _, _ = marching_cubes(image, spacing=(5, 1, 1), allow_degenerate=True)
+    points, faces, _, _ = marching_cubes(image, spacing=(1, 1, 1), allow_degenerate=True)
 
     faces = np.hstack([np.concatenate(([3], row)) for row in faces])
 
@@ -31,7 +31,7 @@ def point_cloud_from_mask(img):
     image = np.array(img).astype(np.uint8)
 
     xm, ym, zm = np.mgrid[0:image.shape[0], 0:image.shape[2], 0:image.shape[1]].astype(np.float64)
-    xm = xm * 5
+    xm = xm * 1
 
     print("\nCreating points for 3d visualization...")
     points = list()

@@ -21,12 +21,12 @@ def read_data_from_folder(folder_path: str):
 
     Function loads T1 and T2 images from given folder as objects of ImageSequences class and then returns it.
     """
+    print(f"Loading data from folder {folder_path}...")
+
     img_dict = {'T1': None,
                 'T2': None}
 
-    print(f"Loading data from folder {folder_path}...")
-
-    for key in tqdm(img_dict.keys()):
+    for key in tqdm(img_dict.keys(), desc="Loading: "):
         img_path = os.path.join(folder_path, str(key + '.tif'))
 
         try:
@@ -46,9 +46,11 @@ def read_all_data(data_path=DATA_PATH):
     Function walks through "data" dictionary subfolders and loads T1 and T2 images as objects of ImageSequences class.
     Then returns list made of all these objects (if there is only one object, it returns it bare, without list).
     """
+    print(f"Loading all data from folder {data_path}...")
+
     images = []
 
-    for folder in os.listdir(data_path):
+    for folder in tqdm(os.listdir(data_path), desc="Loading: "):
         img_dict = {'T1': None,
                     'T2': None}
         for key in img_dict.keys():
