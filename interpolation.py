@@ -45,6 +45,9 @@ def zy_to_tif():
 
     img = np.array(img)
     img = np.swapaxes(img, 0, 1)
+
+    os.rmdir(directory)
+
     return img
 
 
