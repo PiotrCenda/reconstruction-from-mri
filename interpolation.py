@@ -1,5 +1,6 @@
 import os
 import cv2
+import shutil
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
@@ -46,7 +47,7 @@ def zy_to_tif():
     img = np.array(img)
     img = np.swapaxes(img, 0, 1)
 
-    os.rmdir(directory)
+    shutil.rmtree(directory, ignore_errors=True)
 
     return img
 
