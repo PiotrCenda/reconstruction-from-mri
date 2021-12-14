@@ -86,8 +86,8 @@ class ImageSequences:
             t1 = np.array(((t1 - np.min(t1)) / np.ptp(t1))).astype(np.float64)
             t2 = np.array(((t2 - np.min(t2)) / np.ptp(t2))).astype(np.float64)
 
-            thresh_t1 = t1 >= 0.11
-            thresh_t2 = t2 >= 0.19
+            thresh_t1 = t1 >= 0.1
+            thresh_t2 = t2 >= 0.2
 
             p1_2 = pool.map_async(remove_wrap, [image for image in thresh_t1])
             p2_2 = pool.map_async(remove_wrap, [image for image in thresh_t2])
@@ -132,7 +132,7 @@ def mean_bilateral_wrap(img):
 
 
 def mean_bilateral_wrap2(img):
-    return mean_bilateral(img_as_ubyte(img), disk(3))
+    return mean_bilateral(img_as_ubyte(img), disk(10))
 
 
 def flood_wrap(img):
