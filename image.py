@@ -68,10 +68,9 @@ class ImageSequences:
 
             dilated = pool.starmap(dilation, zip(remove_objects, repeat(disk(7))))
             closed = pool.starmap(closing, zip(dilated, repeat(disk(5))))
-            dilated2 = pool.starmap(dilation, zip(closed, repeat(disk(7))))
-            # closed = pool.starmap(closing, zip(dilated2, repeat(disk(5))))
+            dilated2 = pool.starmap(dilation, zip(closed, repeat(disk(5))))
 
-            not_background = max([region.area for region in regionprops(label(np.logical_not(closed), connectivity=3))])
+            not_background = max([region.area for region in regionprops(label(np.logical_not(dilated2), connectivity=3))])
             remove_holes = remove_small_holes(np.array(closed), area_threshold=(not_background - 1), connectivity=3)
 
         return remove_holes
@@ -87,16 +86,21 @@ class ImageSequences:
             t1 = p1.get()
             t2 = p2.get()
 
-        t1 = np.array(((t1 - np.min(t1)) / np.ptp(t1))).astype(np.float64)
-        t2 = np.array(((t2 - np.min(t2)) / np.ptp(t2))).astype(np.float64)
+            t1 = np.array(((t1 - np.min(t1)) / np.ptp(t1))).astype(np.float64)
+            t2 = np.array(((t2 - np.min(t2)) / np.ptp(t2))).astype(np.float64)
 
-        thresh_t1 = t1 >= 0.1
-        thresh_t2 = t2 >= 0.18
+            thresh_t1 = t1 >= 0.1
+            thresh_t2 = t2 >= 0.18
 
-        save_tif(thresh_t1, img_name="thresh_t1", folder="masks")
-        save_tif(thresh_t2, img_name="thresh_t2", folder="masks")
+            p1_2 = pool.map_async(remove_wrap, [image for image in thresh_t1])
+            p2_2 = pool.map_async(remove_wrap, [image for image in thresh_t2])
+            t1 = np.array(p1_2.get()).astype(np.float64)
+            t2 = np.array(p2_2.get()).astype(np.float64)
 
-        result = np.logical_or(thresh_t1, thresh_t2)
+        save_tif(t1, img_name="thresh_t1", folder="masks")
+        save_tif(t2, img_name="thresh_t2", folder="masks")
+
+        result = np.logical_or(t1, t2)
 
         return result
 
@@ -118,6 +122,11 @@ class ImageSequences:
         return result
 
 
+def remove_wrap(img):
+    img = remove_small_holes(img, area_threshold=10)
+    return remove_small_objects(img, min_size=30)
+
+
 def mean_bilateral_wrap(img):
     return mean_bilateral(img_as_ubyte(img), disk(7))
 
@@ -127,4 +136,4 @@ def mean_bilateral_wrap2(img):
 
 
 def flood_wrap(img):
-    return flood(img, seed_point=(0, 0), tolerance=0.05)
+    return flood(img, seed_point=(0, 0), tolerance=0.06)
