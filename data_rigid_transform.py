@@ -4,6 +4,8 @@ from scipy import optimize
 from skimage.segmentation import flood
 from skimage.morphology import remove_small_holes, remove_small_objects, closing, disk
 from skimage.feature import canny
+from skimage.filters.rank import mean_bilateral
+from skimage.util import img_as_ubyte
 
 from data_manipulation import timer_block, save_tif
 
@@ -117,12 +119,12 @@ def rigid_transform(img, args):
 
 
 def model_to_register_fitting(image, flood_thresh=0.05):
-    median = np.array([nd.median_filter(img, footprint=disk(2)) for img in image]).astype(np.float64)
+    median = np.array([mean_bilateral(img_as_ubyte(img), disk(3)) for img in image]).astype(np.float64)
     model = np.array([flood(img, (0, 0), tolerance=flood_thresh) for img in median])
     closed = np.array([closing(img, disk(5)) for img in model])
     remove_noise = np.array([remove_small_holes(img, area_threshold=1500) for img in closed])
     remove_noise2 = np.array([remove_small_objects(img, min_size=1500) for img in remove_noise])
-    median2 = np.array([nd.median_filter(img, footprint=disk(2)) for img in remove_noise2])
+    median2 = np.array([mean_bilateral(img_as_ubyte(img), disk(3)) for img in remove_noise2])
     return np.array([canny(img, sigma=2) for img in median2]).astype(np.bool_)
 
 
