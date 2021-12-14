@@ -4,10 +4,19 @@ import shutil
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+from skimage.util import img_as_ubyte
 
 
 mkdir_error_message = "Error: creating dir"
 directory = 'temp'
+
+
+def interpolate(img):
+    scale_z_to_y(img)
+    interpolated = zy_to_tif()
+    interpolated[interpolated >= 0.5] = 255
+    interpolated[interpolated < 0.5] = 0
+    return img_as_ubyte(interpolated)
 
 
 def scale_z_to_y(img):
@@ -64,7 +73,7 @@ def show_xyz(img):
     plt.show()
 
 
-def show_rec_xyz(img):
+def cephalo(img):
     z_slice = np.zeros(img[0, :, :].shape)
     y_slice = np.zeros(img[:, 0, :].shape)
     x_slice = np.zeros(img[:, :, 0].shape)

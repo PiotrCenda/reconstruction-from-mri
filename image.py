@@ -9,7 +9,7 @@ from multiprocessing.pool import ThreadPool
 from itertools import repeat
 
 from data_rigid_transform import rigid_transform
-from data_manipulation import func_timer
+from data_manipulation import func_timer, save_tif
 
 
 class ImageSequences:
@@ -46,16 +46,30 @@ class ImageSequences:
     @func_timer
     def background_mask(self):
         with mp.Pool(processes=mp.cpu_count()) as pool:
-            p1 = pool.map_async(flood_wrap, [image for image in self.__t1])
-            p2 = pool.map_async(flood_wrap, [image for image in self.__t2])
+            p1 = pool.map_async(mean_bilateral_wrap, [image for image in self.__t1])
+            p2 = pool.map_async(mean_bilateral_wrap, [image for image in self.__t2])
 
-            and_img = np.logical_and(p1.get(), p2.get())
+            t1 = p1.get()
+            t2 = p2.get()
+
+            t1 = np.array(((t1 - np.min(t1)) / np.ptp(t1))).astype(np.float64)
+            t2 = np.array(((t2 - np.min(t2)) / np.ptp(t2))).astype(np.float64)
+
+            p1_2 = pool.map_async(flood_wrap, [image for image in t1])
+            p2_2 = pool.map_async(flood_wrap, [image for image in t2])
+
+            save_tif(np.array(p1.get()), img_name="bilateral_1", folder="masks")
+            save_tif(np.array(p2.get()), img_name="bilateral_2", folder="masks")
+
+            and_img = np.logical_and(p1_2.get(), p2_2.get())
 
             background_size = max([region.area for region in regionprops(label(and_img, connectivity=3))])
             remove_objects = remove_small_objects(and_img, min_size=(background_size - 1), connectivity=3)
 
-            dilated = pool.starmap(dilation, zip(remove_objects, repeat(disk(10))))
+            dilated = pool.starmap(dilation, zip(remove_objects, repeat(disk(7))))
             closed = pool.starmap(closing, zip(dilated, repeat(disk(5))))
+            dilated2 = pool.starmap(dilation, zip(closed, repeat(disk(7))))
+            # closed = pool.starmap(closing, zip(dilated2, repeat(disk(5))))
 
             not_background = max([region.area for region in regionprops(label(np.logical_not(closed), connectivity=3))])
             remove_holes = remove_small_holes(np.array(closed), area_threshold=(not_background - 1), connectivity=3)
@@ -68,8 +82,8 @@ class ImageSequences:
         update filter and noise reduction
         """
         with mp.Pool(processes=mp.cpu_count()) as pool:
-            p1 = pool.map_async(mean_bilateral_wrap, [image for image in self.__t1])
-            p2 = pool.map_async(mean_bilateral_wrap, [image for image in self.__t2])
+            p1 = pool.map_async(mean_bilateral_wrap2, [image for image in self.__t1])
+            p2 = pool.map_async(mean_bilateral_wrap2, [image for image in self.__t2])
             t1 = p1.get()
             t2 = p2.get()
 
@@ -77,7 +91,10 @@ class ImageSequences:
         t2 = np.array(((t2 - np.min(t2)) / np.ptp(t2))).astype(np.float64)
 
         thresh_t1 = t1 >= 0.1
-        thresh_t2 = t2 >= 0.14
+        thresh_t2 = t2 >= 0.18
+
+        save_tif(thresh_t1, img_name="thresh_t1", folder="masks")
+        save_tif(thresh_t2, img_name="thresh_t2", folder="masks")
 
         result = np.logical_or(thresh_t1, thresh_t2)
 
@@ -89,19 +106,24 @@ class ImageSequences:
         remove sinuses and air, upgrade multiprocessing
         """
         with ThreadPool(processes=mp.cpu_count()) as pool:
-            p1 = pool.apply_async(self.background_mask)
-            p2 = pool.apply_async(self.soft_tissues)
+            background = pool.apply_async(self.background_mask)
+            soft = pool.apply_async(self.soft_tissues)
 
-            no_soft_tissues = np.logical_not(np.logical_or(p1.get(), p2.get()))
+            no_soft_tissues = np.logical_not(np.logical_or(background.get(), soft.get()))
 
-        skull_size = max([region.area for region in regionprops(label(no_soft_tissues, connectivity=3))])
-        result = remove_small_objects(no_soft_tissues, min_size=(skull_size - 1), connectivity=3)
+        remove = np.array([remove_small_objects(img, min_size=25) for img in no_soft_tissues])
+        skull_size = max([region.area for region in regionprops(label(remove, connectivity=3))])
+        result = remove_small_objects(remove, min_size=(skull_size - 1), connectivity=3)
 
         return result
 
 
 def mean_bilateral_wrap(img):
-    return mean_bilateral(img_as_ubyte(img), disk(2))
+    return mean_bilateral(img_as_ubyte(img), disk(7))
+
+
+def mean_bilateral_wrap2(img):
+    return mean_bilateral(img_as_ubyte(img), disk(3))
 
 
 def flood_wrap(img):
