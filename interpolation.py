@@ -37,7 +37,7 @@ def scale_z_to_y(img):
     print(f"Saving scaled image slices to \"{directory}\" folder...")
 
     for img_slice in tqdm(range(img.shape[2]), desc="Saving: "):
-        ax.imshow(img[:, img_slice, :], interpolation='quadric', cmap='gray', aspect=aspect_ratio)
+        ax.imshow(img[:, img_slice, :], interpolation='bicubic', cmap='gray', aspect=aspect_ratio)
         fig.savefig(os.path.join(directory, (str(img_slice) + '.png')), dpi=my_dpi)
         ax.clear()
 
