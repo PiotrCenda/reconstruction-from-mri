@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from skimage.util import img_as_ubyte
-from skimage.exposure import equalize_hist, equalize_adapthist, adjust_log, adjust_sigmoid
+from skimage.exposure import adjust_log, adjust_sigmoid
 
 from data_manipulation import save_tif
 
@@ -18,8 +18,8 @@ def interpolate(img):
     scale_z_to_y(img)
     interpolated = zy_to_tif()
     # comment to cephalo
-    interpolated[interpolated >= 1] = 255
-    interpolated[interpolated < 1] = 0
+    # interpolated[interpolated >= 1] = 255
+    # interpolated[interpolated < 1] = 0
     return img_as_ubyte(interpolated)
 
 
@@ -107,9 +107,9 @@ def cephalo(img, soft):
     for i in range(soft.shape[2]):
         x_soft += soft[::-1, :, i]
 
-    x_slice = normalize(adjust_sigmoid(normalize(np.sqrt(x_slice))) + 0.1 * normalize(np.sqrt(x_soft)))
-    y_slice = normalize(adjust_sigmoid(normalize(np.sqrt(y_slice))) + 0.1 * normalize(np.sqrt(y_soft)))
-    z_slice = normalize(adjust_sigmoid(normalize(np.sqrt(z_slice))) + 0.1 * normalize(np.sqrt(z_soft)))
+    x_slice = normalize(normalize(np.sqrt(x_slice)) + 0.25 * normalize(np.sqrt(x_soft)))
+    y_slice = normalize(normalize(np.sqrt(y_slice)) + 0.25 * normalize(np.sqrt(y_soft)))
+    z_slice = normalize(normalize(np.sqrt(z_slice)) + 0.25 * normalize(np.sqrt(z_soft)))
 
     save_tif(x_slice, img_name="x_slice", folder="cephalometry")
     save_tif(y_slice, img_name="y_slice", folder="cephalometry")

@@ -17,13 +17,12 @@ if __name__ == '__main__':
     img = read_data_from_folder(os.path.abspath('data/head'))
     img.t2_rigid_transform(parameters=params_auto)
 
-    with timer_block("bones mask making with interpolation"):
+    with timer_block("cephalometry reconstruction"):
         bones = img.bones_mask()
         save_tif(bones, img_name="bones_mask", folder="masks")
-        # soft = img.soft_tissues()
-        # soft_interpolated = interpolate(soft)
+        soft = img.soft_tissues()
+        soft_interpolated = interpolate(soft)
         bones_interpolated = interpolate(bones)
         save_tif(bones_interpolated, img_name='bones_mask_interpolated', folder='masks')
-        # cephalo(bones_interpolated, soft_interpolated)
+        cephalo(bones_interpolated, soft_interpolated)
         plot_3d(bones_interpolated)
-        # plot_3d(soft_interpolated)

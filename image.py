@@ -1,6 +1,6 @@
 import numpy as np
 from skimage.segmentation import flood
-from skimage.morphology import remove_small_holes, remove_small_objects, disk, ball, closing, dilation, erosion
+from skimage.morphology import remove_small_holes, remove_small_objects, disk, diamond, ball, closing, dilation, erosion
 from skimage.measure import label, regionprops
 from skimage.filters.rank import mean_bilateral
 from skimage.util import img_as_ubyte
@@ -66,16 +66,16 @@ class ImageSequences:
 
             remove = pool.map(remove_wrap, [image for image in and_img])
             save_tif(remove, img_name="and_flood_background_remove", folder="masks")
-            eroded = pool.starmap(erosion, zip(remove, repeat(disk(3))))
+            eroded = pool.starmap(erosion, zip(remove, repeat(diamond(5))))
             save_tif(eroded, img_name="eroded_background", folder="masks")
 
             size = max([region.area for region in regionprops(label(np.array(eroded), connectivity=3))] + [1])
             remove_2 = remove_small_objects(np.array(eroded), min_size=(size - 1), connectivity=3)
             save_tif(remove_2, img_name="eroded_background_remove", folder="masks")
 
-            closed = pool.starmap(closing, zip(remove_2, repeat(disk(9))))
+            closed = pool.starmap(closing, zip(remove_2, repeat(disk(11))))
             save_tif(closed, img_name="closed_background", folder="masks")
-            dilated = pool.starmap(dilation, zip(closed, repeat(disk(9))))
+            dilated = pool.starmap(dilation, zip(closed, repeat(disk(11))))
             save_tif(dilated, img_name="dilated_background", folder="masks")
 
             and_img_2 = np.logical_and(remove, dilated)
@@ -83,11 +83,11 @@ class ImageSequences:
 
             remove_3 = pool.map(remove_biggest_hl, [image for image in and_img_2])
             save_tif(remove_3, img_name="and_background_2_remove", folder="masks")
-            closed_2 = pool.starmap(closing, zip(remove_3, repeat(disk(9))))
+            closed_2 = pool.starmap(closing, zip(remove_3, repeat(disk(15))))
             save_tif(closed_2, img_name="closed_background_2", folder="masks")
-            dilated_2 = pool.starmap(dilation, zip(closed_2, repeat(disk(5))))
+            dilated_2 = pool.starmap(dilation, zip(closed_2, repeat(disk(9))))
             save_tif(dilated_2, img_name="background", folder="masks")
-            result = pool.starmap(closing, zip(dilated_2, repeat(disk(11))))
+            result = pool.starmap(closing, zip(dilated_2, repeat(disk(15))))
             save_tif(result, img_name="closed_background_2", folder="masks")
 
         return result
@@ -172,7 +172,7 @@ class ImageSequences:
             remove = np.array([remove_small_objects(img, min_size=30) for img in bones_2])
             save_tif(remove, img_name="no_soft_and_background_remove", folder="masks")
 
-        dilated = dilation(remove, ball(3))
+        dilated = dilation(remove, ball(2))
         save_tif(dilated, img_name="dilated_bone", folder="masks")
 
         size = max([region.area for region in regionprops(label(np.array(dilated), connectivity=3))] + [1])
@@ -185,13 +185,13 @@ class ImageSequences:
 
 
 def remove_wrap(img):
-    img = remove_small_holes(img, area_threshold=50)
+    img = remove_small_holes(img, area_threshold=60)
     return remove_small_objects(img, min_size=10)
 
 
 def remove_wrap_bone(img):
-    img = remove_small_holes(img, area_threshold=10)
-    return remove_small_objects(img, min_size=10)
+    img = remove_small_holes(img, area_threshold=20)
+    return remove_small_objects(img, min_size=20)
 
 
 def remove_biggest_obj(img):
@@ -209,11 +209,11 @@ def remove_biggest_hl(img):
 
 
 def mean_bilateral_wrap(img):
-    return mean_bilateral(img_as_ubyte(img), disk(5))
+    return mean_bilateral(img_as_ubyte(img), disk(7))
 
 
 def mean_bilateral_wrap2(img):
-    return mean_bilateral(img_as_ubyte(img), disk(5))
+    return mean_bilateral(img_as_ubyte(img), disk(3))
 
 
 def mean_bilateral_wrap3(img):
@@ -221,4 +221,4 @@ def mean_bilateral_wrap3(img):
 
 
 def flood_wrap(img):
-    return flood(img, seed_point=(0, 0), tolerance=0.05)
+    return flood(img, seed_point=(0, 0), tolerance=0.07)
