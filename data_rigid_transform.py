@@ -2,11 +2,9 @@ import numpy as np
 import scipy.ndimage as nd
 from scipy import optimize
 from skimage.segmentation import flood
-from skimage.morphology import remove_small_holes, remove_small_objects, closing, disk
+from skimage.morphology import remove_small_objects, remove_small_holes, closing, disk
+from skimage.measure import label, regionprops
 from skimage.feature import canny
-from skimage.filters.rank import mean_bilateral
-from skimage.util import img_as_ubyte
-
 from data_manipulation import timer_block, save_tif
 
 
@@ -59,18 +57,6 @@ def translate_matrix(x, y, z, sx, sy, sz):
     return trans_mat
 
 
-def scale_matrix(x, y, z):
-    """
-    returns scale matrix for axis
-    theta should be in radians
-    """
-    scale_mat = np.array([[x, 0, 0, 0],
-                          [0, y, 0, 0],
-                          [0, 0, z, 0],
-                          [0, 0, 0, 1]])
-    return scale_mat
-
-
 def center_matrix(transform, shape):
     x_mid = int((shape[1] - 1) / 2)
     y_mid = int((shape[0] - 1) / 2)
@@ -119,17 +105,16 @@ def rigid_transform(img, args):
 
 
 def model_to_register_fitting(image, flood_thresh=0.05):
-    median = np.array([mean_bilateral(img_as_ubyte(img), disk(3)) for img in image]).astype(np.float64)
+    median = np.array([nd.median_filter(img, footprint=disk(2)) for img in image]).astype(np.float64)
     model = np.array([flood(img, (0, 0), tolerance=flood_thresh) for img in median])
     closed = np.array([closing(img, disk(5)) for img in model])
     remove_noise = np.array([remove_small_holes(img, area_threshold=1500) for img in closed])
     remove_noise2 = np.array([remove_small_objects(img, min_size=1500) for img in remove_noise])
-    median2 = np.array([mean_bilateral(img_as_ubyte(img), disk(3)) for img in remove_noise2])
-    return np.array([canny(img, sigma=2) for img in median2]).astype(np.bool_)
+    return np.array([canny(img, sigma=2) for img in remove_noise2]).astype(np.bool_)
 
 
 def ssd(a, b):
-    err = np.logical_and(a[1:-1, 1:-1, 1:-1], b[1:-1, 1:-1, 1:-1]).astype(np.int64)
+    err = np.logical_and(a[5:-5, 5:-5, 5:-5], b[5:-5, 5:-5, 5:-5]).astype(np.int64)
     cost = -np.sqrt(np.sum([img.ravel() for img in err]))
     print(f"Cost function: {-cost}")
     return cost
@@ -138,6 +123,8 @@ def ssd(a, b):
 def register_image(image_model, image_to_change):
     start_params = np.array([2.01109052e-04, 1.57808256e-06, 3.65095064e-05, 3.50697591e-04, 2.56535195e-04,
                              -2.36831914e-04, 9.40511337e-01, 9.38207923e-01, 1.00130253e+00])
+    # [2.77076163e-03, -7.52885706e-03, 7.03755373e-04, 3.79097329e-01, -2.86304089e-03, 6.44776348e-01,
+    #  9.39824479e-01, 9.40039058e-01, 1.00105912e+00]
 
     def cost_function(params):
         image_changed = rigid_transform(image_to_change, params)
