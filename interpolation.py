@@ -5,6 +5,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from skimage.util import img_as_ubyte
+from skimage.exposure import equalize_hist, equalize_adapthist, adjust_log, adjust_sigmoid
+
+from data_manipulation import save_tif
 
 
 mkdir_error_message = "Error: creating dir"
@@ -14,8 +17,9 @@ directory = 'temp'
 def interpolate(img):
     scale_z_to_y(img)
     interpolated = zy_to_tif()
-    interpolated[interpolated >= 0.5] = 255
-    interpolated[interpolated < 0.5] = 0
+    # comment to cephalo
+    interpolated[interpolated >= 1] = 255
+    interpolated[interpolated < 1] = 0
     return img_as_ubyte(interpolated)
 
 
@@ -73,10 +77,21 @@ def show_xyz(img):
     plt.show()
 
 
-def cephalo(img):
+def normalize(a):
+    """
+    Simple normalization to 0-1
+    """
+    return (a - np.min(a)) / np.ptp(a)
+
+
+def cephalo(img, soft):
     z_slice = np.zeros(img[0, :, :].shape)
     y_slice = np.zeros(img[:, 0, :].shape)
     x_slice = np.zeros(img[:, :, 0].shape)
+
+    z_soft = np.zeros(img[0, :, :].shape)
+    y_soft = np.zeros(img[:, 0, :].shape)
+    x_soft = np.zeros(img[:, :, 0].shape)
 
     for i in range(img.shape[0]):
         z_slice += img[i, :, :]
@@ -85,8 +100,17 @@ def cephalo(img):
     for i in range(img.shape[2]):
         x_slice += img[::-1, :, i]
 
-    f, ax = plt.subplots(1, 3)
-    ax[0].imshow(z_slice, cmap='gray')
-    ax[1].imshow(y_slice, cmap='gray')
-    ax[2].imshow(x_slice, cmap='gray')
-    plt.show()
+    for i in range(soft.shape[0]):
+        z_soft += soft[i, :, :]
+    for i in range(soft.shape[1]):
+        y_soft += soft[::-1, i, :]
+    for i in range(soft.shape[2]):
+        x_soft += soft[::-1, :, i]
+
+    x_slice = normalize(adjust_sigmoid(normalize(np.sqrt(x_slice))) + 0.1 * normalize(np.sqrt(x_soft)))
+    y_slice = normalize(adjust_sigmoid(normalize(np.sqrt(y_slice))) + 0.1 * normalize(np.sqrt(y_soft)))
+    z_slice = normalize(adjust_sigmoid(normalize(np.sqrt(z_slice))) + 0.1 * normalize(np.sqrt(z_soft)))
+
+    save_tif(x_slice, img_name="x_slice", folder="cephalometry")
+    save_tif(y_slice, img_name="y_slice", folder="cephalometry")
+    save_tif(z_slice, img_name="z_slice", folder="cephalometry")
