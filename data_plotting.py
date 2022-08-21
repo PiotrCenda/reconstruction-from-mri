@@ -12,7 +12,7 @@ def plot_3d(image):
     print("Creating model...\n")
 
     mesh = pv.PolyData(points)
-    mesh.plot(point_size=3, style='points', color='white', eye_dome_lighting=True, cpos="yx",
+    mesh.plot(point_size=3, style='points', color='white', eye_dome_lighting=True, cpos="yz",
               render_points_as_spheres=True)
 
 

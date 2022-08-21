@@ -1,4 +1,5 @@
 import os
+import sys
 import numpy as np
 from skimage import io
 from tqdm import tqdm
@@ -69,3 +70,17 @@ def read_all_data(data_path=DATA_PATH):
     else:
         print("Only one data loaded. Returning as a ImageSequences class. \n")
         return images[0]
+    
+    
+def read_tif(img_path: str):
+    print(f"Loading {img_path}...")
+
+    try:
+        img = normalize(io.imread(img_path))
+    except FileNotFoundError:
+        print(f"{img_path} not found.")
+        sys.exit(1)
+
+    print(f"Image {img_path} loaded.")
+    
+    return img
