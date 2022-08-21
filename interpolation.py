@@ -8,6 +8,7 @@ from skimage.util import img_as_ubyte
 from skimage.exposure import adjust_log, adjust_sigmoid
 
 from data_manipulation import save_tif
+from data_plotting import plot_3d
 
 
 mkdir_error_message = "Error: creating dir"
@@ -49,7 +50,7 @@ def scale_z_to_y(img):
 def zy_to_tif():
     img = []
     img_paths = [os.path.join(directory, f) for f in os.listdir(directory)]
-    img_paths.sort(key=len)
+    img_paths.sort(key=lambda x: int("".join(symbol for symbol in x if symbol.isnumeric())))
 
     print(f"Loading scaled image slices from \"{directory}\" folder...")
 

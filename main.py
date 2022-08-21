@@ -19,10 +19,13 @@ if __name__ == '__main__':
 
     with timer_block("cephalometry reconstruction"):
         bones = img.bones_mask()
-        save_tif(bones, img_name="bones_mask", folder="masks")
+        # save_tif(bones, img_name="bones_mask", folder="tests")
         soft = img.soft_tissues()
+        # save_tif(soft, img_name="soft_mask", folder="tests")
+
         soft_interpolated = interpolate(soft)
+        save_tif(soft_interpolated, img_name="soft_mask_interpolated", folder="tests")
         bones_interpolated = interpolate(bones)
-        save_tif(bones_interpolated, img_name='bones_mask_interpolated', folder='masks')
+        save_tif(bones_interpolated, img_name='bones_mask_interpolated', folder='tests')
+
         cephalo(bones_interpolated, soft_interpolated)
-        plot_3d(bones_interpolated)
