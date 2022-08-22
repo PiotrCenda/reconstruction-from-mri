@@ -3,8 +3,7 @@ import numpy as np
 
 from data_loader import read_tif
 from data_manipulation import save_tif, timer_block
-from data_plotting import plot_3d
-from pantomography import cylindrical_coords, rotate
+from pantomography import rotate, get_linspace
 
 # parameters calculated by auto fitting function
 # params_auto_old = np.array([2.01109052e-04, 1.57808256e-06, 3.65095064e-05, 3.50697591e-04, 2.56535195e-04,
@@ -18,6 +17,5 @@ if __name__ == '__main__':
     soft_tissues = read_tif(os.path.abspath('data/tissues/soft_mask_interpolated.tif'))
 
     with timer_block("pantomography reconstruction"):
-        cylindrical_coords(bone_tissues)
         bone_tissues = rotate(bone_tissues)
-        plot_3d(bone_tissues)
+        get_linspace(bone_tissues, bone_tissues.shape[2] // 2, 0)
