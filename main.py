@@ -3,7 +3,7 @@ import numpy as np
 
 from data_loader import read_tif
 from data_manipulation import save_tif, timer_block
-from pantomography import rotate, get_linspace
+from pantomography import rotate, generate_pantomography
 
 # parameters calculated by auto fitting function
 # params_auto_old = np.array([2.01109052e-04, 1.57808256e-06, 3.65095064e-05, 3.50697591e-04, 2.56535195e-04,
@@ -18,4 +18,5 @@ if __name__ == '__main__':
 
     with timer_block("pantomography reconstruction"):
         bone_tissues = rotate(bone_tissues)
-        get_linspace(bone_tissues, bone_tissues.shape[2] // 2, 0)
+        generate_pantomography(bone_tissues)
+
