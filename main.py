@@ -1,5 +1,7 @@
 import os
 import numpy as np
+from pathlib import Path
+import matplotlib.pyplot as plt
 
 from data_loader import read_tif
 from data_manipulation import save_tif, timer_block
@@ -18,5 +20,13 @@ if __name__ == '__main__':
 
     with timer_block("pantomography reconstruction"):
         bone_tissues = rotate(bone_tissues)
-        generate_pantomography(bone_tissues)
+        pantomography = generate_pantomography(bone_tissues)
+        
+        plt.figure()
+        plt.imshow(pantomography, cmap='gray')
+        folder_path = Path("results/pantomography")
+        Path(folder_path).mkdir(parents=True, exist_ok=True)
+        file_path = os.path.join(str(folder_path), "pantomography.png")
+        plt.imsave(file_path, pantomography, cmap='gray', dpi=300)
+        plt.close()
 
